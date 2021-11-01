@@ -22,6 +22,7 @@ import (
 	imagesapi "github.com/containerd/containerd/api/services/images/v1"
 	introspectionapi "github.com/containerd/containerd/api/services/introspection/v1"
 	namespacesapi "github.com/containerd/containerd/api/services/namespaces/v1"
+	"github.com/containerd/containerd/api/services/sessions/v1"
 	"github.com/containerd/containerd/api/services/tasks/v1"
 	"github.com/containerd/containerd/containers"
 	"github.com/containerd/containerd/content"
@@ -43,6 +44,7 @@ type services struct {
 	eventService         EventService
 	leasesService        leases.Manager
 	introspectionService introspection.Service
+	sessionService       sessions.SessionsClient
 }
 
 // ServicesOpt allows callers to set options on the services
@@ -153,5 +155,12 @@ func WithIntrospectionClient(in introspectionapi.IntrospectionClient) ServicesOp
 func WithIntrospectionService(in introspection.Service) ServicesOpt {
 	return func(s *services) {
 		s.introspectionService = in
+	}
+}
+
+// WithSessionService sets the sessions service
+func WithSessionService(in sessions.SessionsClient) ServicesOpt {
+	return func(s *services) {
+		s.sessionService = in
 	}
 }

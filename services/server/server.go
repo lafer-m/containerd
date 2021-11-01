@@ -347,6 +347,7 @@ func (s *Server) Stop() {
 // of all plugins.
 func LoadPlugins(ctx context.Context, config *srvconfig.Config) ([]*plugin.Registration, error) {
 	// load all plugins into containerd
+	log.G(ctx).Info("test load plugins")
 	path := config.PluginDir
 	if path == "" {
 		path = filepath.Join(config.Root, "plugins")

@@ -5,6 +5,7 @@ import (
 	"errors"
 
 	api "github.com/containerd/containerd/api/services/sessions/v1"
+	"github.com/containerd/containerd/log"
 	"github.com/containerd/containerd/plugin"
 	"github.com/containerd/containerd/services"
 	"google.golang.org/grpc"
@@ -16,6 +17,7 @@ func init() {
 		ID:       "sessions",
 		Requires: []plugin.Type{plugin.ServicePlugin},
 		InitFn: func(ic *plugin.InitContext) (interface{}, error) {
+			log.L.Logger.Info("test session init grpc")
 			plugins, err := ic.GetByType(plugin.ServicePlugin)
 			if err != nil {
 				return nil, err

@@ -35,6 +35,7 @@ import (
 	introspectionapi "github.com/containerd/containerd/api/services/introspection/v1"
 	leasesapi "github.com/containerd/containerd/api/services/leases/v1"
 	namespacesapi "github.com/containerd/containerd/api/services/namespaces/v1"
+	"github.com/containerd/containerd/api/services/sessions/v1"
 	snapshotsapi "github.com/containerd/containerd/api/services/snapshots/v1"
 	"github.com/containerd/containerd/api/services/tasks/v1"
 	versionservice "github.com/containerd/containerd/api/services/version/v1"
@@ -644,6 +645,15 @@ func (c *Client) ImageService() images.Store {
 	c.connMu.Lock()
 	defer c.connMu.Unlock()
 	return NewImageStoreFromClient(imagesapi.NewImagesClient(c.conn))
+}
+
+func (c *Client) SessionService() sessions.SessionsClient {
+	if c.sessionService != nil {
+		return c.sessionService
+	}
+	c.connMu.Lock()
+	defer c.connMu.Unlock()
+	return sessions.NewSessionsClient(c.conn)
 }
 
 // DiffService returns the underlying Differ

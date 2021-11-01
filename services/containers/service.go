@@ -21,6 +21,7 @@ import (
 	"io"
 
 	api "github.com/containerd/containerd/api/services/containers/v1"
+	"github.com/containerd/containerd/log"
 	"github.com/containerd/containerd/plugin"
 	"github.com/containerd/containerd/services"
 	ptypes "github.com/gogo/protobuf/types"
@@ -29,6 +30,8 @@ import (
 )
 
 func init() {
+	log.L.Info("test xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx grpc")
+
 	plugin.Register(&plugin.Registration{
 		Type: plugin.GRPCPlugin,
 		ID:   "containers",
