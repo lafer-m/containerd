@@ -1,0 +1,50 @@
+syntax = "proto3";
+
+package containerd.services.sessions.v1;
+
+option go_package = "github.com/containerd/containerd/api/services/sessions/v1;sessions";
+
+message UserInfo {
+    string username = 1;
+    string password = 2;
+}
+
+message AuthRequest {
+    UserInfo user = 1;
+}
+
+message AuthResponse {
+    string token = 1;
+}
+
+message Session {
+    string id = 1;    // ${linux_session_id(pid)}_${uuid}
+    string username = 2;
+    string token = 3;
+}
+
+message RegisterSessionRequest {
+    Session session = 1;
+}
+
+message RegisterSessionResponse {}
+
+message VerifyTokenRequest {
+    string token = 1;
+}
+
+message VerifyTokenResponse {}
+
+
+message VerifySessionRequest {
+    string id = 1;
+}
+
+message VerifySessionResponse {}
+
+service Sessions {
+    rpc Auth(AuthRequest) returns (AuthResponse);
+    rpc RegisterSession(RegisterSessionRequest) returns (RegisterSessionResponse);
+    rpc VerifyToken(VerifyTokenRequest) returns (VerifyTokenResponse);
+    rpc VerifySession(VerifySessionRequest) returns (VerifySessionResponse);
+}

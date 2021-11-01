@@ -2389,7 +2389,6 @@ file {
     java_outer_classname: "StatusProto"
     java_multiple_files: true
     go_package: "rpc"
-    cc_enable_arenas: true
     objc_class_prefix: "RPC"
   }
   syntax: "proto3"
@@ -2998,6 +2997,139 @@ file {
     go_package: "github.com/containerd/containerd/api/services/namespaces/v1;namespaces"
   }
   weak_dependency: 0
+  syntax: "proto3"
+}
+file {
+  name: "github.com/containerd/containerd/api/services/sessions/v1/sessions.proto"
+  package: "containerd.services.sessions.v1"
+  message_type {
+    name: "UserInfo"
+    field {
+      name: "username"
+      number: 1
+      label: LABEL_OPTIONAL
+      type: TYPE_STRING
+      json_name: "username"
+    }
+    field {
+      name: "password"
+      number: 2
+      label: LABEL_OPTIONAL
+      type: TYPE_STRING
+      json_name: "password"
+    }
+  }
+  message_type {
+    name: "AuthRequest"
+    field {
+      name: "user"
+      number: 1
+      label: LABEL_OPTIONAL
+      type: TYPE_MESSAGE
+      type_name: ".containerd.services.sessions.v1.UserInfo"
+      json_name: "user"
+    }
+  }
+  message_type {
+    name: "AuthResponse"
+    field {
+      name: "token"
+      number: 1
+      label: LABEL_OPTIONAL
+      type: TYPE_STRING
+      json_name: "token"
+    }
+  }
+  message_type {
+    name: "Session"
+    field {
+      name: "id"
+      number: 1
+      label: LABEL_OPTIONAL
+      type: TYPE_STRING
+      json_name: "id"
+    }
+    field {
+      name: "username"
+      number: 2
+      label: LABEL_OPTIONAL
+      type: TYPE_STRING
+      json_name: "username"
+    }
+    field {
+      name: "token"
+      number: 3
+      label: LABEL_OPTIONAL
+      type: TYPE_STRING
+      json_name: "token"
+    }
+  }
+  message_type {
+    name: "RegisterSessionRequest"
+    field {
+      name: "session"
+      number: 1
+      label: LABEL_OPTIONAL
+      type: TYPE_MESSAGE
+      type_name: ".containerd.services.sessions.v1.Session"
+      json_name: "session"
+    }
+  }
+  message_type {
+    name: "RegisterSessionResponse"
+  }
+  message_type {
+    name: "VerifyTokenRequest"
+    field {
+      name: "token"
+      number: 1
+      label: LABEL_OPTIONAL
+      type: TYPE_STRING
+      json_name: "token"
+    }
+  }
+  message_type {
+    name: "VerifyTokenResponse"
+  }
+  message_type {
+    name: "VerifySessionRequest"
+    field {
+      name: "id"
+      number: 1
+      label: LABEL_OPTIONAL
+      type: TYPE_STRING
+      json_name: "id"
+    }
+  }
+  message_type {
+    name: "VerifySessionResponse"
+  }
+  service {
+    name: "Sessions"
+    method {
+      name: "Auth"
+      input_type: ".containerd.services.sessions.v1.AuthRequest"
+      output_type: ".containerd.services.sessions.v1.AuthResponse"
+    }
+    method {
+      name: "RegisterSession"
+      input_type: ".containerd.services.sessions.v1.RegisterSessionRequest"
+      output_type: ".containerd.services.sessions.v1.RegisterSessionResponse"
+    }
+    method {
+      name: "VerifyToken"
+      input_type: ".containerd.services.sessions.v1.VerifyTokenRequest"
+      output_type: ".containerd.services.sessions.v1.VerifyTokenResponse"
+    }
+    method {
+      name: "VerifySession"
+      input_type: ".containerd.services.sessions.v1.VerifySessionRequest"
+      output_type: ".containerd.services.sessions.v1.VerifySessionResponse"
+    }
+  }
+  options {
+    go_package: "github.com/containerd/containerd/api/services/sessions/v1;sessions"
+  }
   syntax: "proto3"
 }
 file {
