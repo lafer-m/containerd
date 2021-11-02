@@ -2078,6 +2078,113 @@ file {
   syntax: "proto3"
 }
 file {
+  name: "github.com/containerd/containerd/api/services/identities/v1/identities.proto"
+  package: "containerd.services.identities.v1"
+  message_type {
+    name: "LoginReq"
+    field {
+      name: "Username"
+      number: 1
+      label: LABEL_OPTIONAL
+      type: TYPE_STRING
+      json_name: "Username"
+    }
+    field {
+      name: "Password"
+      number: 2
+      label: LABEL_OPTIONAL
+      type: TYPE_STRING
+      json_name: "Password"
+    }
+    field {
+      name: "Timestamp"
+      number: 3
+      label: LABEL_OPTIONAL
+      type: TYPE_INT64
+      json_name: "Timestamp"
+    }
+  }
+  message_type {
+    name: "LoginResp"
+    field {
+      name: "Token"
+      number: 2
+      label: LABEL_OPTIONAL
+      type: TYPE_STRING
+      json_name: "Token"
+    }
+  }
+  message_type {
+    name: "LogoutReq"
+    field {
+      name: "Username"
+      number: 1
+      label: LABEL_OPTIONAL
+      type: TYPE_STRING
+      json_name: "Username"
+    }
+    field {
+      name: "Token"
+      number: 2
+      label: LABEL_OPTIONAL
+      type: TYPE_STRING
+      json_name: "Token"
+    }
+  }
+  message_type {
+    name: "LogoutResp"
+  }
+  message_type {
+    name: "VerifyTokenReq"
+    field {
+      name: "Token"
+      number: 1
+      label: LABEL_OPTIONAL
+      type: TYPE_STRING
+      json_name: "Token"
+    }
+    field {
+      name: "Username"
+      number: 2
+      label: LABEL_OPTIONAL
+      type: TYPE_STRING
+      json_name: "Username"
+    }
+    field {
+      name: "Timestamp"
+      number: 3
+      label: LABEL_OPTIONAL
+      type: TYPE_INT64
+      json_name: "Timestamp"
+    }
+  }
+  message_type {
+    name: "VerifyTokenResp"
+  }
+  service {
+    name: "UserIdentification"
+    method {
+      name: "Login"
+      input_type: ".containerd.services.identities.v1.LoginReq"
+      output_type: ".containerd.services.identities.v1.LoginResp"
+    }
+    method {
+      name: "Logout"
+      input_type: ".containerd.services.identities.v1.LogoutReq"
+      output_type: ".containerd.services.identities.v1.LogoutResp"
+    }
+    method {
+      name: "VerifyToken"
+      input_type: ".containerd.services.identities.v1.VerifyTokenReq"
+      output_type: ".containerd.services.identities.v1.VerifyTokenResp"
+    }
+  }
+  options {
+    go_package: "github.com/containerd/containerd/api/services/identities/v1;identities"
+  }
+  syntax: "proto3"
+}
+file {
   name: "github.com/containerd/containerd/api/services/images/v1/images.proto"
   package: "containerd.services.images.v1"
   dependency: "gogoproto/gogo.proto"
@@ -3074,6 +3181,14 @@ file {
       type_name: ".containerd.services.sessions.v1.Session"
       json_name: "session"
     }
+    field {
+      name: "action"
+      number: 2
+      label: LABEL_OPTIONAL
+      type: TYPE_ENUM
+      type_name: ".containerd.services.sessions.v1.ACTION"
+      json_name: "action"
+    }
   }
   message_type {
     name: "RegisterSessionResponse"
@@ -3086,6 +3201,13 @@ file {
       label: LABEL_OPTIONAL
       type: TYPE_STRING
       json_name: "token"
+    }
+    field {
+      name: "username"
+      number: 2
+      label: LABEL_OPTIONAL
+      type: TYPE_STRING
+      json_name: "username"
     }
   }
   message_type {
@@ -3103,6 +3225,17 @@ file {
   }
   message_type {
     name: "VerifySessionResponse"
+  }
+  enum_type {
+    name: "ACTION"
+    value {
+      name: "REGISTER"
+      number: 0
+    }
+    value {
+      name: "UNREGISTER"
+      number: 1
+    }
   }
   service {
     name: "Sessions"

@@ -4,6 +4,12 @@ package containerd.services.sessions.v1;
 
 option go_package = "github.com/containerd/containerd/api/services/sessions/v1;sessions";
 
+
+enum ACTION {
+    REGISTER = 0;
+    UNREGISTER = 1;
+}
+
 message UserInfo {
     string username = 1;
     string password = 2;
@@ -25,12 +31,14 @@ message Session {
 
 message RegisterSessionRequest {
     Session session = 1;
+    ACTION  action = 2;
 }
 
 message RegisterSessionResponse {}
 
 message VerifyTokenRequest {
     string token = 1;
+    string username = 2;
 }
 
 message VerifyTokenResponse {}

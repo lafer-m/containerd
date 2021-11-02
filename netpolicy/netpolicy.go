@@ -1,0 +1,5 @@
+package netpolicy
+
+func init() {
+
+}
