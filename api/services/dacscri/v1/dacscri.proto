@@ -1,0 +1,133 @@
+syntax = "proto3";
+
+package containerd.services.dacscri.v1;
+
+import weak "gogoproto/gogo.proto";
+import "google/protobuf/empty.proto";
+import "google/protobuf/any.proto";
+import "google/protobuf/timestamp.proto";
+
+
+option go_package = "github.com/containerd/containerd/api/services/dacscri/v1;dacscri";
+
+
+enum TARTYPE {
+    HTTP = 0;
+    FILE = 1;
+}
+
+enum RESTARTPOLICY {
+    ALWAYS = 0;
+    NO = 1;
+}
+
+message App {
+    // [可选] app的标签，也就是container的标签
+    map<string, string> labels  = 1;
+    // [必选] app的类型， 如gateway，后台定义
+    string  type = 2;
+    // [可选] tar_url的类型, 默认是http类型。
+    TARTYPE tar_type = 3;
+    // [必选] app下载链接， 或者包的绝对路径。
+    string  tar_url = 4;
+}
+
+message RunContainerRequest {
+    // [可选]， 默认是写死的base image
+    string image = 1;
+    // [必选]， 用户token验证
+    string token = 2;
+    // [必选]， 用户需要监听的端口，类似于-p 80:80, 端口映射
+    // ["80:80", "8000:8010"] "host-port:container-port"
+    repeated string publish = 3;
+	// [可选]， 默认是always, no/always
+	RESTARTPOLICY restart = 4;
+	// [可选]， 加密文件系统大小, 默认是创建10G大小的文件系统
+	string    encrypting_file_system_size = 5;
+    // [必选], 容器需要跑的业务包基础信息。
+    App app = 6;
+}
+
+message Container {
+	// ID is the user-specified identifier.
+	//
+	// This field may not be updated.
+	string id = 1;
+
+	// Labels provides an area to include arbitrary data on containers.
+	//
+	// The combined size of a key/value pair cannot exceed 4096 bytes.
+	//
+	// Note that to add a new value to this field, read the existing set and
+	// include the entire result in the update call.
+	map<string, string> labels  = 2;
+
+	// Image contains the reference of the image used to build the
+	// specification and snapshots for running this container.
+	//
+	// If this field is updated, the spec and rootfs needed to updated, as well.
+	string image = 3;
+
+	message Runtime {
+		// Name is the name of the runtime.
+		string name = 1;
+		// Options specify additional runtime initialization options.
+		google.protobuf.Any options = 2;
+	}
+	// Runtime specifies which runtime to use for executing this container.
+	Runtime runtime = 4;
+
+	// Spec to be used when creating the container. This is runtime specific.
+	google.protobuf.Any spec = 5;
+
+	// Snapshotter specifies the snapshotter name used for rootfs
+	string snapshotter = 6;
+
+	// SnapshotKey specifies the snapshot key to use for the container's root
+	// filesystem. When starting a task from this container, a caller should
+	// look up the mounts from the snapshot service and include those on the
+	// task create request.
+	//
+	// Snapshots referenced in this field will not be garbage collected.
+	//
+	// This field is set to empty when the rootfs is not a snapshot.
+	//
+	// This field may be updated.
+	string snapshot_key = 7;
+
+	// CreatedAt is the time the container was first created.
+	google.protobuf.Timestamp created_at = 8 [(gogoproto.stdtime) = true, (gogoproto.nullable) = false];
+
+	// UpdatedAt is the last time the container was mutated.
+	google.protobuf.Timestamp updated_at = 9 [(gogoproto.stdtime) = true, (gogoproto.nullable) = false];
+
+	// Extensions allow clients to provide zero or more blobs that are directly
+	// associated with the container. One may provide protobuf, json, or other
+	// encoding formats. The primary use of this is to further decorate the
+	// container object with fields that may be specific to a client integration.
+	//
+	// The key portion of this map should identify a "name" for the extension
+	// that should be unique against other extensions. When updating extension
+	// data, one should only update the specified extension using field paths
+	// to select a specific map key.
+	map<string, google.protobuf.Any> extensions = 10 [(gogoproto.nullable) = false];
+}
+
+message RunContainerResponse {
+    // container 基础信息
+    Container container = 1;
+}
+
+message RemoveContainerRequest {
+    // [必选] 容器id
+    string id = 1;
+}
+
+
+service DacsCRI {
+    // Run container
+    rpc Run(RunContainerRequest) returns (RunContainerResponse);
+    // Remove container
+	rpc Remove(RemoveContainerRequest) returns (google.protobuf.Empty);
+}
+

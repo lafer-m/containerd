@@ -1,5 +1,3 @@
 package netpolicy
 
-func init() {
-
-}
+func init() {}

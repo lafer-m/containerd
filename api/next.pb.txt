@@ -1742,6 +1742,298 @@ file {
   syntax: "proto3"
 }
 file {
+  name: "github.com/containerd/containerd/api/services/dacscri/v1/dacscri.proto"
+  package: "containerd.services.dacscri.v1"
+  dependency: "gogoproto/gogo.proto"
+  dependency: "google/protobuf/empty.proto"
+  dependency: "google/protobuf/any.proto"
+  dependency: "google/protobuf/timestamp.proto"
+  message_type {
+    name: "App"
+    field {
+      name: "labels"
+      number: 1
+      label: LABEL_REPEATED
+      type: TYPE_MESSAGE
+      type_name: ".containerd.services.dacscri.v1.App.LabelsEntry"
+      json_name: "labels"
+    }
+    field {
+      name: "type"
+      number: 2
+      label: LABEL_OPTIONAL
+      type: TYPE_STRING
+      json_name: "type"
+    }
+    field {
+      name: "tar_type"
+      number: 3
+      label: LABEL_OPTIONAL
+      type: TYPE_ENUM
+      type_name: ".containerd.services.dacscri.v1.TARTYPE"
+      json_name: "tarType"
+    }
+    field {
+      name: "tar_url"
+      number: 4
+      label: LABEL_OPTIONAL
+      type: TYPE_STRING
+      json_name: "tarUrl"
+    }
+    nested_type {
+      name: "LabelsEntry"
+      field {
+        name: "key"
+        number: 1
+        label: LABEL_OPTIONAL
+        type: TYPE_STRING
+        json_name: "key"
+      }
+      field {
+        name: "value"
+        number: 2
+        label: LABEL_OPTIONAL
+        type: TYPE_STRING
+        json_name: "value"
+      }
+      options {
+        map_entry: true
+      }
+    }
+  }
+  message_type {
+    name: "RunContainerRequest"
+    field {
+      name: "image"
+      number: 1
+      label: LABEL_OPTIONAL
+      type: TYPE_STRING
+      json_name: "image"
+    }
+    field {
+      name: "token"
+      number: 2
+      label: LABEL_OPTIONAL
+      type: TYPE_STRING
+      json_name: "token"
+    }
+    field {
+      name: "publish"
+      number: 3
+      label: LABEL_REPEATED
+      type: TYPE_STRING
+      json_name: "publish"
+    }
+    field {
+      name: "app"
+      number: 4
+      label: LABEL_OPTIONAL
+      type: TYPE_MESSAGE
+      type_name: ".containerd.services.dacscri.v1.App"
+      json_name: "app"
+    }
+  }
+  message_type {
+    name: "Container"
+    field {
+      name: "id"
+      number: 1
+      label: LABEL_OPTIONAL
+      type: TYPE_STRING
+      json_name: "id"
+    }
+    field {
+      name: "labels"
+      number: 2
+      label: LABEL_REPEATED
+      type: TYPE_MESSAGE
+      type_name: ".containerd.services.dacscri.v1.Container.LabelsEntry"
+      json_name: "labels"
+    }
+    field {
+      name: "image"
+      number: 3
+      label: LABEL_OPTIONAL
+      type: TYPE_STRING
+      json_name: "image"
+    }
+    field {
+      name: "runtime"
+      number: 4
+      label: LABEL_OPTIONAL
+      type: TYPE_MESSAGE
+      type_name: ".containerd.services.dacscri.v1.Container.Runtime"
+      json_name: "runtime"
+    }
+    field {
+      name: "spec"
+      number: 5
+      label: LABEL_OPTIONAL
+      type: TYPE_MESSAGE
+      type_name: ".google.protobuf.Any"
+      json_name: "spec"
+    }
+    field {
+      name: "snapshotter"
+      number: 6
+      label: LABEL_OPTIONAL
+      type: TYPE_STRING
+      json_name: "snapshotter"
+    }
+    field {
+      name: "snapshot_key"
+      number: 7
+      label: LABEL_OPTIONAL
+      type: TYPE_STRING
+      json_name: "snapshotKey"
+    }
+    field {
+      name: "created_at"
+      number: 8
+      label: LABEL_OPTIONAL
+      type: TYPE_MESSAGE
+      type_name: ".google.protobuf.Timestamp"
+      options {
+        65001: 0
+        65010: 1
+      }
+      json_name: "createdAt"
+    }
+    field {
+      name: "updated_at"
+      number: 9
+      label: LABEL_OPTIONAL
+      type: TYPE_MESSAGE
+      type_name: ".google.protobuf.Timestamp"
+      options {
+        65001: 0
+        65010: 1
+      }
+      json_name: "updatedAt"
+    }
+    field {
+      name: "extensions"
+      number: 10
+      label: LABEL_REPEATED
+      type: TYPE_MESSAGE
+      type_name: ".containerd.services.dacscri.v1.Container.ExtensionsEntry"
+      options {
+        65001: 0
+      }
+      json_name: "extensions"
+    }
+    nested_type {
+      name: "LabelsEntry"
+      field {
+        name: "key"
+        number: 1
+        label: LABEL_OPTIONAL
+        type: TYPE_STRING
+        json_name: "key"
+      }
+      field {
+        name: "value"
+        number: 2
+        label: LABEL_OPTIONAL
+        type: TYPE_STRING
+        json_name: "value"
+      }
+      options {
+        map_entry: true
+      }
+    }
+    nested_type {
+      name: "Runtime"
+      field {
+        name: "name"
+        number: 1
+        label: LABEL_OPTIONAL
+        type: TYPE_STRING
+        json_name: "name"
+      }
+      field {
+        name: "options"
+        number: 2
+        label: LABEL_OPTIONAL
+        type: TYPE_MESSAGE
+        type_name: ".google.protobuf.Any"
+        json_name: "options"
+      }
+    }
+    nested_type {
+      name: "ExtensionsEntry"
+      field {
+        name: "key"
+        number: 1
+        label: LABEL_OPTIONAL
+        type: TYPE_STRING
+        json_name: "key"
+      }
+      field {
+        name: "value"
+        number: 2
+        label: LABEL_OPTIONAL
+        type: TYPE_MESSAGE
+        type_name: ".google.protobuf.Any"
+        json_name: "value"
+      }
+      options {
+        map_entry: true
+      }
+    }
+  }
+  message_type {
+    name: "RunContainerResponse"
+    field {
+      name: "container"
+      number: 1
+      label: LABEL_OPTIONAL
+      type: TYPE_MESSAGE
+      type_name: ".containerd.services.dacscri.v1.Container"
+      json_name: "container"
+    }
+  }
+  message_type {
+    name: "RemoveContainerRequest"
+    field {
+      name: "id"
+      number: 1
+      label: LABEL_OPTIONAL
+      type: TYPE_STRING
+      json_name: "id"
+    }
+  }
+  enum_type {
+    name: "TARTYPE"
+    value {
+      name: "HTTP"
+      number: 0
+    }
+    value {
+      name: "FILE"
+      number: 1
+    }
+  }
+  service {
+    name: "DacsCRI"
+    method {
+      name: "Run"
+      input_type: ".containerd.services.dacscri.v1.RunContainerRequest"
+      output_type: ".containerd.services.dacscri.v1.RunContainerResponse"
+    }
+    method {
+      name: "Remove"
+      input_type: ".containerd.services.dacscri.v1.RemoveContainerRequest"
+      output_type: ".google.protobuf.Empty"
+    }
+  }
+  options {
+    go_package: "github.com/containerd/containerd/api/services/dacscri/v1;dacscri"
+  }
+  weak_dependency: 0
+  syntax: "proto3"
+}
+file {
   name: "github.com/containerd/containerd/api/types/descriptor.proto"
   package: "containerd.types"
   dependency: "gogoproto/gogo.proto"

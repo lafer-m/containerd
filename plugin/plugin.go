@@ -79,6 +79,10 @@ const (
 	EventPlugin Type = "io.containerd.event.v1"
 	// TracingProcessorPlugin implements a open telemetry span processor
 	TracingProcessorPlugin Type = "io.containerd.tracing.processor.v1"
+	// NetPolicyPlugin implements netpolicy manager
+	NetPolicyPlugin Type = "io.containerd.netpolicy.v1"
+	// SessionPlugin implements session manager
+	SessionPlugin Type = "io.containerd.session.v1"
 )
 
 const (

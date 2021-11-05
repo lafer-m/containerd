@@ -83,6 +83,7 @@ github.com/containerd/console
 github.com/containerd/containerd/api/events
 github.com/containerd/containerd/api/services/containers/v1
 github.com/containerd/containerd/api/services/content/v1
+github.com/containerd/containerd/api/services/dacscri/v1
 github.com/containerd/containerd/api/services/diff/v1
 github.com/containerd/containerd/api/services/events/v1
 github.com/containerd/containerd/api/services/identities/v1
@@ -126,6 +127,10 @@ github.com/containerd/imgcrypt/images/encryption
 ## explicit
 github.com/containerd/nri
 github.com/containerd/nri/types/v1
+# github.com/containerd/stargz-snapshotter v0.9.0
+## explicit
+github.com/containerd/stargz-snapshotter/fs/config
+github.com/containerd/stargz-snapshotter/fs/source
 # github.com/containerd/ttrpc v1.0.2
 ## explicit
 github.com/containerd/ttrpc
@@ -175,6 +180,21 @@ github.com/cpuguy83/go-md2man/v2/md2man
 # github.com/davecgh/go-spew v1.1.1
 ## explicit
 github.com/davecgh/go-spew/spew
+# github.com/docker/cli v20.10.8+incompatible
+## explicit
+github.com/docker/cli/cli/config
+github.com/docker/cli/cli/config/configfile
+github.com/docker/cli/cli/config/credentials
+github.com/docker/cli/cli/config/types
+# github.com/docker/distribution v2.7.1+incompatible
+github.com/docker/distribution/registry/api/errcode
+# github.com/docker/docker v20.10.7+incompatible
+## explicit
+github.com/docker/docker/errdefs
+github.com/docker/docker/pkg/homedir
+# github.com/docker/docker-credential-helpers v0.6.4
+github.com/docker/docker-credential-helpers/client
+github.com/docker/docker-credential-helpers/credentials
 # github.com/docker/go-events v0.0.0-20190806004212-e31b211e4f1c
 ## explicit
 github.com/docker/go-events
@@ -264,7 +284,7 @@ github.com/grpc-ecosystem/grpc-gateway/runtime
 github.com/grpc-ecosystem/grpc-gateway/utilities
 # github.com/hashicorp/errwrap v1.0.0
 github.com/hashicorp/errwrap
-# github.com/hashicorp/go-multierror v1.0.0
+# github.com/hashicorp/go-multierror v1.1.1
 ## explicit
 github.com/hashicorp/go-multierror
 # github.com/imdario/mergo v0.3.12
@@ -272,11 +292,12 @@ github.com/hashicorp/go-multierror
 github.com/imdario/mergo
 # github.com/json-iterator/go v1.1.11
 github.com/json-iterator/go
-# github.com/klauspost/compress v1.11.13
+# github.com/klauspost/compress v1.13.6
 ## explicit
+github.com/klauspost/compress
 github.com/klauspost/compress/fse
 github.com/klauspost/compress/huff0
-github.com/klauspost/compress/snappy
+github.com/klauspost/compress/internal/snapref
 github.com/klauspost/compress/zstd
 github.com/klauspost/compress/zstd/internal/xxhash
 # github.com/matttproud/golang_protobuf_extensions v1.0.2-0.20181231171920-c182affec369
@@ -324,7 +345,7 @@ github.com/opencontainers/runtime-spec/specs-go
 github.com/opencontainers/selinux/go-selinux
 github.com/opencontainers/selinux/go-selinux/label
 github.com/opencontainers/selinux/pkg/pwalk
-# github.com/pelletier/go-toml v1.9.3
+# github.com/pelletier/go-toml v1.9.4
 ## explicit
 github.com/pelletier/go-toml
 # github.com/pkg/errors v0.9.1
@@ -367,7 +388,7 @@ github.com/stretchr/testify/require
 # github.com/tchap/go-patricia v2.2.6+incompatible
 ## explicit
 github.com/tchap/go-patricia/patricia
-# github.com/urfave/cli v1.22.2 => github.com/urfave/cli v1.22.1
+# github.com/urfave/cli v1.22.4 => github.com/urfave/cli v1.22.1
 ## explicit
 github.com/urfave/cli
 # go.etcd.io/bbolt v1.3.6
@@ -587,11 +608,11 @@ gotest.tools/v3/internal/assert
 gotest.tools/v3/internal/difflib
 gotest.tools/v3/internal/format
 gotest.tools/v3/internal/source
-# k8s.io/api v0.22.0
+# k8s.io/api v0.22.2
 ## explicit
 k8s.io/api/authentication/v1
 k8s.io/api/core/v1
-# k8s.io/apimachinery v0.22.0
+# k8s.io/apimachinery v0.22.2
 ## explicit
 k8s.io/apimachinery/pkg/api/errors
 k8s.io/apimachinery/pkg/api/meta
@@ -652,7 +673,7 @@ k8s.io/apiserver/pkg/features
 k8s.io/apiserver/pkg/server/httplog
 k8s.io/apiserver/pkg/util/feature
 k8s.io/apiserver/pkg/util/wsstream
-# k8s.io/client-go v0.22.0
+# k8s.io/client-go v0.22.2
 ## explicit
 k8s.io/client-go/pkg/apis/clientauthentication
 k8s.io/client-go/pkg/apis/clientauthentication/install
@@ -681,7 +702,7 @@ k8s.io/component-base/logs/logreduction
 k8s.io/component-base/metrics
 k8s.io/component-base/metrics/legacyregistry
 k8s.io/component-base/version
-# k8s.io/cri-api v0.22.0
+# k8s.io/cri-api v0.22.2
 ## explicit
 k8s.io/cri-api/pkg/apis/runtime/v1
 k8s.io/cri-api/pkg/apis/runtime/v1alpha2
