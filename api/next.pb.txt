@@ -1825,8 +1825,23 @@ file {
       json_name: "publish"
     }
     field {
-      name: "app"
+      name: "restart"
       number: 4
+      label: LABEL_OPTIONAL
+      type: TYPE_ENUM
+      type_name: ".containerd.services.dacscri.v1.RESTARTPOLICY"
+      json_name: "restart"
+    }
+    field {
+      name: "encrypting_file_system_size"
+      number: 5
+      label: LABEL_OPTIONAL
+      type: TYPE_STRING
+      json_name: "encryptingFileSystemSize"
+    }
+    field {
+      name: "app"
+      number: 6
       label: LABEL_OPTIONAL
       type: TYPE_MESSAGE
       type_name: ".containerd.services.dacscri.v1.App"
@@ -2011,6 +2026,17 @@ file {
     }
     value {
       name: "FILE"
+      number: 1
+    }
+  }
+  enum_type {
+    name: "RESTARTPOLICY"
+    value {
+      name: "ALWAYS"
+      number: 0
+    }
+    value {
+      name: "NO"
       number: 1
     }
   }

@@ -21,11 +21,13 @@ require (
 	github.com/containerd/ttrpc v1.0.2
 	github.com/containerd/typeurl v1.0.2
 	github.com/containerd/zfs v1.0.0
+	github.com/containernetworking/cni v1.0.1
 	github.com/containernetworking/plugins v1.0.1
 	github.com/coreos/go-systemd/v22 v22.3.2
 	github.com/davecgh/go-spew v1.1.1
 	github.com/docker/cli v20.10.8+incompatible
 	github.com/docker/docker v20.10.7+incompatible
+	github.com/docker/go-connections v0.4.0
 	github.com/docker/go-events v0.0.0-20190806004212-e31b211e4f1c
 	github.com/docker/go-metrics v0.0.1
 	github.com/docker/go-units v0.4.0
