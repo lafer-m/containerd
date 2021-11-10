@@ -806,6 +806,202 @@ file {
   syntax: "proto3"
 }
 file {
+  name: "github.com/containerd/containerd/api/services/auth/v1/aksk.proto"
+  package: "containerd.services.auth.v1"
+  message_type {
+    name: "GetAKSKReq"
+    field {
+      name: "Token"
+      number: 1
+      label: LABEL_OPTIONAL
+      type: TYPE_STRING
+      json_name: "Token"
+    }
+    field {
+      name: "Timestamp"
+      number: 2
+      label: LABEL_OPTIONAL
+      type: TYPE_INT64
+      json_name: "Timestamp"
+    }
+  }
+  message_type {
+    name: "GetAKSKResp"
+    field {
+      name: "AccessKeyId"
+      number: 1
+      label: LABEL_OPTIONAL
+      type: TYPE_STRING
+      json_name: "AccessKeyId"
+    }
+    field {
+      name: "SecretAccessKey"
+      number: 2
+      label: LABEL_OPTIONAL
+      type: TYPE_STRING
+      json_name: "SecretAccessKey"
+    }
+  }
+  message_type {
+    name: "VerifyAKSKReq"
+    field {
+      name: "AccessKeyId"
+      number: 1
+      label: LABEL_OPTIONAL
+      type: TYPE_STRING
+      json_name: "AccessKeyId"
+    }
+    field {
+      name: "Msg"
+      number: 2
+      label: LABEL_OPTIONAL
+      type: TYPE_STRING
+      json_name: "Msg"
+    }
+    field {
+      name: "Timestamp"
+      number: 3
+      label: LABEL_OPTIONAL
+      type: TYPE_INT64
+      json_name: "Timestamp"
+    }
+    field {
+      name: "Signature"
+      number: 4
+      label: LABEL_OPTIONAL
+      type: TYPE_STRING
+      json_name: "Signature"
+    }
+  }
+  message_type {
+    name: "VerifyASKSResp"
+  }
+  service {
+    name: "ServiceAuth"
+    method {
+      name: "GetServiceAKSK"
+      input_type: ".containerd.services.auth.v1.GetAKSKReq"
+      output_type: ".containerd.services.auth.v1.GetAKSKResp"
+    }
+    method {
+      name: "VerifyServiceAKSK"
+      input_type: ".containerd.services.auth.v1.VerifyAKSKReq"
+      output_type: ".containerd.services.auth.v1.VerifyASKSResp"
+    }
+  }
+  options {
+    go_package: "github.com/containerd/containerd/api/services/auth/v1;auth"
+  }
+  syntax: "proto3"
+}
+file {
+  name: "github.com/containerd/containerd/api/services/auth/v1/identities.proto"
+  package: "containerd.services.auth.v1"
+  message_type {
+    name: "LoginReq"
+    field {
+      name: "Username"
+      number: 1
+      label: LABEL_OPTIONAL
+      type: TYPE_STRING
+      json_name: "Username"
+    }
+    field {
+      name: "Password"
+      number: 2
+      label: LABEL_OPTIONAL
+      type: TYPE_STRING
+      json_name: "Password"
+    }
+    field {
+      name: "Timestamp"
+      number: 3
+      label: LABEL_OPTIONAL
+      type: TYPE_INT64
+      json_name: "Timestamp"
+    }
+  }
+  message_type {
+    name: "LoginResp"
+    field {
+      name: "Token"
+      number: 1
+      label: LABEL_OPTIONAL
+      type: TYPE_STRING
+      json_name: "Token"
+    }
+  }
+  message_type {
+    name: "LogoutReq"
+    field {
+      name: "Username"
+      number: 1
+      label: LABEL_OPTIONAL
+      type: TYPE_STRING
+      json_name: "Username"
+    }
+    field {
+      name: "Token"
+      number: 2
+      label: LABEL_OPTIONAL
+      type: TYPE_STRING
+      json_name: "Token"
+    }
+  }
+  message_type {
+    name: "LogoutResp"
+  }
+  message_type {
+    name: "VerifyTokenReq"
+    field {
+      name: "Token"
+      number: 1
+      label: LABEL_OPTIONAL
+      type: TYPE_STRING
+      json_name: "Token"
+    }
+    field {
+      name: "Username"
+      number: 2
+      label: LABEL_OPTIONAL
+      type: TYPE_STRING
+      json_name: "Username"
+    }
+    field {
+      name: "Timestamp"
+      number: 3
+      label: LABEL_OPTIONAL
+      type: TYPE_INT64
+      json_name: "Timestamp"
+    }
+  }
+  message_type {
+    name: "VerifyTokenResp"
+  }
+  service {
+    name: "UserIdentification"
+    method {
+      name: "Login"
+      input_type: ".containerd.services.auth.v1.LoginReq"
+      output_type: ".containerd.services.auth.v1.LoginResp"
+    }
+    method {
+      name: "Logout"
+      input_type: ".containerd.services.auth.v1.LogoutReq"
+      output_type: ".containerd.services.auth.v1.LogoutResp"
+    }
+    method {
+      name: "VerifyToken"
+      input_type: ".containerd.services.auth.v1.VerifyTokenReq"
+      output_type: ".containerd.services.auth.v1.VerifyTokenResp"
+    }
+  }
+  options {
+    go_package: "github.com/containerd/containerd/api/services/auth/v1;auth"
+  }
+  syntax: "proto3"
+}
+file {
   name: "google/protobuf/empty.proto"
   package: "google.protobuf"
   message_type {
@@ -2018,6 +2214,30 @@ file {
       json_name: "id"
     }
   }
+  message_type {
+    name: "ListContainersRequest"
+    field {
+      name: "filters"
+      number: 1
+      label: LABEL_REPEATED
+      type: TYPE_STRING
+      json_name: "filters"
+    }
+  }
+  message_type {
+    name: "ListContainersResponse"
+    field {
+      name: "containers"
+      number: 1
+      label: LABEL_REPEATED
+      type: TYPE_MESSAGE
+      type_name: ".containerd.services.dacscri.v1.Container"
+      options {
+        65001: 0
+      }
+      json_name: "containers"
+    }
+  }
   enum_type {
     name: "TARTYPE"
     value {
@@ -2051,6 +2271,11 @@ file {
       name: "Remove"
       input_type: ".containerd.services.dacscri.v1.RemoveContainerRequest"
       output_type: ".google.protobuf.Empty"
+    }
+    method {
+      name: "List"
+      input_type: ".containerd.services.dacscri.v1.ListContainersRequest"
+      output_type: ".containerd.services.dacscri.v1.ListContainersResponse"
     }
   }
   options {

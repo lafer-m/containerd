@@ -123,11 +123,31 @@ message RemoveContainerRequest {
     string id = 1;
 }
 
+message ListContainersRequest {
+	// Filters contains one or more filters using the syntax defined in the
+	// containerd filter package.
+	//
+	// The returned result will be those that match any of the provided
+	// filters. Expanded, containers that match the following will be
+	// returned:
+	//
+	//   filters[0] or filters[1] or ... or filters[n-1] or filters[n]
+	//
+	// If filters is zero-length or nil, all items will be returned.
+	repeated string filters = 1;
+}
+
+message ListContainersResponse {
+	repeated Container containers = 1 [(gogoproto.nullable) = false];
+}
+
 
 service DacsCRI {
     // Run container
     rpc Run(RunContainerRequest) returns (RunContainerResponse);
     // Remove container
 	rpc Remove(RemoveContainerRequest) returns (google.protobuf.Empty);
+	// List containers
+	rpc List(ListContainersRequest) returns (ListContainersResponse);
 }
 

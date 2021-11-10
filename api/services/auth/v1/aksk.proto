@@ -1,8 +1,8 @@
 syntax = "proto3";
 
-package containerd.services.aksk.v1;
+package containerd.services.auth.v1;
 
-option go_package = "github.com/containerd/containerd/api/services/aksk/v1;aksk";
+option go_package = "github.com/containerd/containerd/api/services/auth/v1;auth";
 
 message GetAKSKReq{
   // 任务临时的 token, 由服务端下发任务时携带
