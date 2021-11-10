@@ -19,6 +19,10 @@ import (
 )
 
 func (c *service) Remove(ctx context.Context, req *criapi.RemoveContainerRequest) (*types.Empty, error) {
+	if req.ID == "" {
+		return nil, ErrInvalidParam
+	}
+
 	client := c.client
 	timeout := 10 * time.Second
 
@@ -45,9 +49,11 @@ func (c *service) Remove(ctx context.Context, req *criapi.RemoveContainerRequest
 
 	n, err := walker.Walk(ctx, req.ID)
 	if err != nil {
-		return nil, err
+		log.G(ctx).Errorf("walk containers err: %v", err)
+		return nil, ErrFindContainer
 	} else if n == 0 {
 		log.G(ctx).Infof("no such container %s", req.ID)
+		return nil, ErrNoSuchContainer
 	}
 
 	// delete container
@@ -67,7 +73,8 @@ func (c *service) Remove(ctx context.Context, req *criapi.RemoveContainerRequest
 
 	n, err = walker1.Walk(ctx, req.ID)
 	if err != nil {
-		return nil, err
+		log.G(ctx).Errorf("walk containers err: %v", err)
+		return nil, ErrFindContainer
 	} else if n == 0 {
 		log.G(ctx).Infof("no such container %s", req)
 	}
@@ -114,7 +121,7 @@ func stopContainer(ctx context.Context, container containerd.Container, timeout 
 		// signal will be sent once resume is finished
 		if paused {
 			if err := task.Resume(ctx); err != nil {
-				logrus.Warnf("Cannot unpause container %s: %s", container.ID(), err)
+				log.G(ctx).Warnf("Cannot unpause container %s: %s", container.ID(), err)
 			} else {
 				// no need to do it again when send sigkill signal
 				paused = false
@@ -177,11 +184,6 @@ func removeContainer(ctx context.Context, client *containerd.Client, ns, id, req
 	if err != nil {
 		return err
 	}
-	// l, err := container.Labels(ctx)
-	// if err != nil {
-	// 	return err
-	// }
-	// name = l[utils.Name]
 
 	task, err := container.Task(ctx, cio.Load)
 	if err != nil {

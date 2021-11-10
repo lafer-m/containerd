@@ -49,6 +49,7 @@ func (c *service) Run(ctx context.Context, req *criapi.RunContainerRequest) (*cr
 	if req.Image != "" {
 		image = req.Image
 	}
+
 	// only use the containerd default namespace
 	ns := namespaces.Default
 
@@ -244,6 +245,10 @@ func (c *service) Run(ctx context.Context, req *criapi.RunContainerRequest) (*cr
 			ID: container.ID(),
 		},
 	}, nil
+}
+
+func checkParams() {
+
 }
 
 func propagateContainerdLabelsToOCIAnnotations() oci.SpecOpts {

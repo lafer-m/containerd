@@ -1,0 +1,30 @@
+syntax = "proto3";
+
+package containerd.services.aksk.v1;
+
+option go_package = "github.com/containerd/containerd/api/services/aksk/v1;aksk";
+
+message GetAKSKReq{
+  // 任务临时的 token, 由服务端下发任务时携带
+  string Token = 1;
+  // 时间戳, 校验数据的时效性
+  int64 Timestamp = 2;
+}
+
+message GetAKSKResp{
+  string  AccessKeyId = 1;
+  string  SecretAccessKey = 2;
+}
+
+message VerifyAKSKReq {
+  string AccessKeyId = 1;
+  string Msg = 2;
+  int64 Timestamp = 3;
+  string Signature = 4;
+}
+message VerifyASKSResp{}
+
+service ServiceAuth{
+  rpc GetServiceAKSK(GetAKSKReq) returns(GetAKSKResp);
+  rpc VerifyServiceAKSK(VerifyAKSKReq)returns (VerifyASKSResp);
+}
