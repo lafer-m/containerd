@@ -19,7 +19,7 @@ message NetPolicy {
   string AccessType = 5;
   // 是否使用
   bool IsActive = 6;
-}s
+}
 
 
 message PolicyGroup {
