@@ -1,0 +1,44 @@
+syntax = "proto3";
+
+package containerd.services.netpolicy.v1;
+
+
+option go_package = "github.com/containerd/containerd/api/services/netpolicy/v1;netpolicy";
+
+
+message NetPolicy {
+  // 指定策略类型 IP 网段
+  string Type = 1;
+  // 在哪个协议上生效 tcp/udp
+  string Protocol = 2;
+  // 作用的端口
+  int32  Port = 3;
+  // ip地址
+  string Value = 4;
+  // 允许访问, 或者拒绝
+  string AccessType = 5;
+  // 是否使用
+  bool IsActive = 6;
+}s
+
+
+message PolicyGroup {
+  // 策略组名称
+  string Name = 1;
+  repeated NetPolicy NetworkPolicy = 2;
+}
+
+message FetchPolicyReq {
+  string AccessKeyId = 1;
+  string Msg = 2;
+  int64 Timestamp = 3;
+  string Signature = 4;
+}
+
+message FetchPolicyResp {
+  PolicyGroup Group = 1;
+}
+
+service Policy {
+  rpc FetchPolicy(FetchPolicyReq) returns(FetchPolicyResp);
+}

@@ -8,7 +8,8 @@ import (
 	"strings"
 	"time"
 
-	api "github.com/containerd/containerd/api/services/identities/v1"
+	api "github.com/containerd/containerd/api/services/auth/v1"
+	auth "github.com/containerd/containerd/api/services/auth/v1"
 	"github.com/containerd/containerd/defaults"
 	"github.com/containerd/containerd/pkg/dialer"
 	"github.com/pkg/errors"
@@ -49,6 +50,20 @@ func (b *backend) Logout(ctx context.Context, in *api.LogoutReq, opts ...grpc.Ca
 
 func (b *backend) VerifyToken(ctx context.Context, in *api.VerifyTokenReq, opts ...grpc.CallOption) (*api.VerifyTokenResp, error) {
 	return &api.VerifyTokenResp{}, nil
+}
+
+type aksk struct {
+}
+
+func (l *aksk) GetServiceAKSK(ctx context.Context, in *auth.GetAKSKReq, opts ...grpc.CallOption) (*auth.GetAKSKResp, error) {
+	return &auth.GetAKSKResp{
+		AccessKeyId:     "abcd",
+		SecretAccessKey: "bcde",
+	}, nil
+}
+
+func (l *aksk) VerifyServiceAKSK(ctx context.Context, in *auth.VerifyAKSKReq, opts ...grpc.CallOption) (*auth.VerifyASKSResp, error) {
+	return &auth.VerifyASKSResp{}, nil
 }
 
 // for now without tls

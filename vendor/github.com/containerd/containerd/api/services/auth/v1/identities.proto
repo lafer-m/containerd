@@ -1,7 +1,8 @@
 syntax = "proto3";
-package containerd.services.identities.v1;
 
-option go_package = "github.com/containerd/containerd/api/services/identities/v1;identities";
+package containerd.services.auth.v1;
+
+option go_package = "github.com/containerd/containerd/api/services/auth/v1;auth";
 
 message LoginReq {
   string Username = 1;
@@ -10,7 +11,7 @@ message LoginReq {
 }
 
 message LoginResp {
-  string Token = 2; // the user x-session token
+  string Token = 1; // the user x-session token
 }
 
 message LogoutReq {

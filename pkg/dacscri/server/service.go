@@ -14,6 +14,8 @@ type service struct {
 	client *containerd.Client
 	// os is an interface for all required os operations.
 	os osinterface.OS
+	// healthServer
+	health *healthService
 }
 
 func NewService(cfg *config.Config, client *containerd.Client) *service {
@@ -21,10 +23,12 @@ func NewService(cfg *config.Config, client *containerd.Client) *service {
 		config: cfg,
 		client: client,
 		os:     osinterface.RealOS{},
+		health: newHealthService(),
 	}
 }
 
 func (c *service) RegisterTCP(s *grpc.Server) error {
 	criapi.RegisterDacsCRIServer(s, c)
+	c.health.Register(s)
 	return nil
 }

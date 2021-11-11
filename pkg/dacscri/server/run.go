@@ -2,7 +2,11 @@ package server
 
 import (
 	"context"
+	"crypto/hmac"
+	"crypto/md5"
+	"encoding/hex"
 	"encoding/json"
+	"fmt"
 	"io"
 	"io/ioutil"
 	"net/url"
@@ -10,8 +14,10 @@ import (
 	"path/filepath"
 	"runtime"
 	"strings"
+	"time"
 
 	"github.com/containerd/containerd"
+	"github.com/containerd/containerd/api/services/auth/v1"
 	"github.com/containerd/containerd/api/services/dacscri/v1"
 	criapi "github.com/containerd/containerd/api/services/dacscri/v1"
 	"github.com/containerd/containerd/log"
@@ -38,13 +44,32 @@ import (
 )
 
 const (
-	defaultImage = "baseruntime"
-	encrptDir    = "encrpts"
-	MagicArgv1   = "_NERDCTL_INTERNAL_LOGGING"
-	nerdctl      = "/usr/bin/nerdctl"
+	defaultImage    = "baseruntime"
+	encrptDir       = "encrpts"
+	MagicArgv1      = "_NERDCTL_INTERNAL_LOGGING"
+	nerdctl         = "/usr/bin/nerdctl"
+	ServiceLabelKey = "com.dacs.service"
 )
 
 func (c *service) Run(ctx context.Context, req *criapi.RunContainerRequest) (*criapi.RunContainerResponse, error) {
+	if err := checkParams(req); err != nil {
+		return nil, err
+	}
+
+	ak, sk, err := c.getAKSK(req.Token, req.App.Type)
+	if err != nil {
+		log.G(ctx).Errorf("get ak/sk err: %v", err)
+		return nil, ErrNotFoundAKSK
+	}
+
+	defer func() {
+		if err := c.storeAKSK(ak, sk, req.App.Type); err != nil {
+			log.G(ctx).Errorf("store ak/sk error")
+		}
+	}()
+
+	// for http download app tar file
+	downAppToken := signToken(sk, fmt.Sprintf("%s%d", "test", time.Now().Unix()))
 	image := defaultImage
 	if req.Image != "" {
 		image = req.Image
@@ -52,7 +77,6 @@ func (c *service) Run(ctx context.Context, req *criapi.RunContainerRequest) (*cr
 
 	// only use the containerd default namespace
 	ns := namespaces.Default
-
 	ctx = namespaces.WithNamespace(ctx, ns)
 
 	var cancel context.CancelFunc
@@ -94,7 +118,7 @@ func (c *service) Run(ctx context.Context, req *criapi.RunContainerRequest) (*cr
 
 	opts = append(opts, rootfsOpts...)
 	cOpts = append(cOpts, rootfsCOpts...)
-	mountOpts, err := generateMountOpts(ctx, c.client, ensuredImage, id, req)
+	mountOpts, err := generateMountOpts(ctx, c.client, ensuredImage, id, req, downAppToken)
 	if err != nil {
 		return nil, err
 	}
@@ -214,7 +238,7 @@ func (c *service) Run(ctx context.Context, req *criapi.RunContainerRequest) (*cr
 	if req.App.Labels != nil {
 		labels = req.App.Labels
 	}
-	labels["com.dacs.service"] = req.App.Type
+	labels[ServiceLabelKey] = req.App.Type
 	lopts := containerd.WithAdditionalContainerLabels(labels)
 	cOpts = append(cOpts, lopts)
 	ilopts, err := withInternalLabels(ns, hostname, stateDir, netSlice, ports, logURI)
@@ -247,8 +271,55 @@ func (c *service) Run(ctx context.Context, req *criapi.RunContainerRequest) (*cr
 	}, nil
 }
 
-func checkParams() {
+// store
+func (c *service) storeAKSK(ak, sk, service string) error {
+	aksk := c.client.SessionClient()
+	if err := aksk.StoreAKSK(ak, sk, service); err != nil {
+		return err
+	}
+	return nil
+}
 
+func (c *service) getAKSK(token, service string) (string, string, error) {
+	// found from backend
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+	req := &auth.GetAKSKReq{
+		Token:     token,
+		Timestamp: time.Now().Unix(),
+	}
+	resp, err := c.client.SessionClient().GetServiceAKSK(ctx, req)
+	if err != nil {
+		log.G(ctx).Errorf("get ak/sk err: %v", err)
+		return "", "", ErrNotFoundAKSK
+	}
+
+	return resp.AccessKeyId, resp.SecretAccessKey, nil
+}
+
+func signToken(sk, data string) string {
+	mac := hmac.New(md5.New, []byte(sk))
+	mac.Write([]byte(data))
+	return hex.EncodeToString(mac.Sum([]byte("")))
+}
+
+func checkParams(req *criapi.RunContainerRequest) error {
+	if req.App == nil {
+		return ErrInvalidParam
+	}
+	if req.App.Type == "" {
+		return ErrInvalidParam
+	}
+	if req.App.TarUrl == "" {
+		return ErrInvalidParam
+	}
+	if len(req.Publish) == 0 {
+		return ErrInvalidParam
+	}
+	if req.Token == "" {
+		return ErrInvalidParam
+	}
+	return nil
 }
 
 func propagateContainerdLabelsToOCIAnnotations() oci.SpecOpts {
@@ -317,7 +388,7 @@ func generateLogURI(dataStore string) (*url.URL, error) {
 	return cio.LogURIGenerator("binary", nerdctl, args)
 }
 
-func generateMountOpts(ctx context.Context, client *containerd.Client, ensuredImage *utils.EnsuredImage, id string, req *criapi.RunContainerRequest) ([]oci.SpecOpts, error) {
+func generateMountOpts(ctx context.Context, client *containerd.Client, ensuredImage *utils.EnsuredImage, id string, req *criapi.RunContainerRequest, token string) ([]oci.SpecOpts, error) {
 	//nolint:golint,prealloc
 	var (
 		opts []oci.SpecOpts

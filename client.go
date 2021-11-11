@@ -234,6 +234,7 @@ func (c *Client) Reconnect() error {
 	return nil
 }
 
+// func (c *client)
 // Runtime returns the name of the runtime being used
 func (c *Client) Runtime() string {
 	return c.runtime
@@ -645,6 +646,11 @@ func (c *Client) ImageService() images.Store {
 	c.connMu.Lock()
 	defer c.connMu.Unlock()
 	return NewImageStoreFromClient(imagesapi.NewImagesClient(c.conn))
+}
+
+// only used in containerd
+func (c *Client) SessionClient() SessionClient {
+	return c.sessionService
 }
 
 func (c *Client) SessionService() sessions.SessionsClient {

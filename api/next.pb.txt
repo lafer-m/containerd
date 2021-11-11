@@ -2238,6 +2238,9 @@ file {
       json_name: "containers"
     }
   }
+  message_type {
+    name: "StatusRequest"
+  }
   enum_type {
     name: "TARTYPE"
     value {
@@ -2618,113 +2621,6 @@ file {
   }
   weak_dependency: 0
   weak_dependency: 1
-  syntax: "proto3"
-}
-file {
-  name: "github.com/containerd/containerd/api/services/identities/v1/identities.proto"
-  package: "containerd.services.identities.v1"
-  message_type {
-    name: "LoginReq"
-    field {
-      name: "Username"
-      number: 1
-      label: LABEL_OPTIONAL
-      type: TYPE_STRING
-      json_name: "Username"
-    }
-    field {
-      name: "Password"
-      number: 2
-      label: LABEL_OPTIONAL
-      type: TYPE_STRING
-      json_name: "Password"
-    }
-    field {
-      name: "Timestamp"
-      number: 3
-      label: LABEL_OPTIONAL
-      type: TYPE_INT64
-      json_name: "Timestamp"
-    }
-  }
-  message_type {
-    name: "LoginResp"
-    field {
-      name: "Token"
-      number: 2
-      label: LABEL_OPTIONAL
-      type: TYPE_STRING
-      json_name: "Token"
-    }
-  }
-  message_type {
-    name: "LogoutReq"
-    field {
-      name: "Username"
-      number: 1
-      label: LABEL_OPTIONAL
-      type: TYPE_STRING
-      json_name: "Username"
-    }
-    field {
-      name: "Token"
-      number: 2
-      label: LABEL_OPTIONAL
-      type: TYPE_STRING
-      json_name: "Token"
-    }
-  }
-  message_type {
-    name: "LogoutResp"
-  }
-  message_type {
-    name: "VerifyTokenReq"
-    field {
-      name: "Token"
-      number: 1
-      label: LABEL_OPTIONAL
-      type: TYPE_STRING
-      json_name: "Token"
-    }
-    field {
-      name: "Username"
-      number: 2
-      label: LABEL_OPTIONAL
-      type: TYPE_STRING
-      json_name: "Username"
-    }
-    field {
-      name: "Timestamp"
-      number: 3
-      label: LABEL_OPTIONAL
-      type: TYPE_INT64
-      json_name: "Timestamp"
-    }
-  }
-  message_type {
-    name: "VerifyTokenResp"
-  }
-  service {
-    name: "UserIdentification"
-    method {
-      name: "Login"
-      input_type: ".containerd.services.identities.v1.LoginReq"
-      output_type: ".containerd.services.identities.v1.LoginResp"
-    }
-    method {
-      name: "Logout"
-      input_type: ".containerd.services.identities.v1.LogoutReq"
-      output_type: ".containerd.services.identities.v1.LogoutResp"
-    }
-    method {
-      name: "VerifyToken"
-      input_type: ".containerd.services.identities.v1.VerifyTokenReq"
-      output_type: ".containerd.services.identities.v1.VerifyTokenResp"
-    }
-  }
-  options {
-    go_package: "github.com/containerd/containerd/api/services/identities/v1;identities"
-  }
   syntax: "proto3"
 }
 file {
@@ -3650,6 +3546,127 @@ file {
   syntax: "proto3"
 }
 file {
+  name: "github.com/containerd/containerd/api/services/netpolicy/v1/netpolicy.proto"
+  package: "containerd.services.netpolicy.v1"
+  message_type {
+    name: "NetPolicy"
+    field {
+      name: "Type"
+      number: 1
+      label: LABEL_OPTIONAL
+      type: TYPE_STRING
+      json_name: "Type"
+    }
+    field {
+      name: "Protocol"
+      number: 2
+      label: LABEL_OPTIONAL
+      type: TYPE_STRING
+      json_name: "Protocol"
+    }
+    field {
+      name: "Port"
+      number: 3
+      label: LABEL_OPTIONAL
+      type: TYPE_INT32
+      json_name: "Port"
+    }
+    field {
+      name: "Value"
+      number: 4
+      label: LABEL_OPTIONAL
+      type: TYPE_STRING
+      json_name: "Value"
+    }
+    field {
+      name: "AccessType"
+      number: 5
+      label: LABEL_OPTIONAL
+      type: TYPE_STRING
+      json_name: "AccessType"
+    }
+    field {
+      name: "IsActive"
+      number: 6
+      label: LABEL_OPTIONAL
+      type: TYPE_BOOL
+      json_name: "IsActive"
+    }
+  }
+  message_type {
+    name: "PolicyGroup"
+    field {
+      name: "Name"
+      number: 1
+      label: LABEL_OPTIONAL
+      type: TYPE_STRING
+      json_name: "Name"
+    }
+    field {
+      name: "NetworkPolicy"
+      number: 2
+      label: LABEL_REPEATED
+      type: TYPE_MESSAGE
+      type_name: ".containerd.services.netpolicy.v1.NetPolicy"
+      json_name: "NetworkPolicy"
+    }
+  }
+  message_type {
+    name: "FetchPolicyReq"
+    field {
+      name: "AccessKeyId"
+      number: 1
+      label: LABEL_OPTIONAL
+      type: TYPE_STRING
+      json_name: "AccessKeyId"
+    }
+    field {
+      name: "Msg"
+      number: 2
+      label: LABEL_OPTIONAL
+      type: TYPE_STRING
+      json_name: "Msg"
+    }
+    field {
+      name: "Timestamp"
+      number: 3
+      label: LABEL_OPTIONAL
+      type: TYPE_INT64
+      json_name: "Timestamp"
+    }
+    field {
+      name: "Signature"
+      number: 4
+      label: LABEL_OPTIONAL
+      type: TYPE_STRING
+      json_name: "Signature"
+    }
+  }
+  message_type {
+    name: "FetchPolicyResp"
+    field {
+      name: "Group"
+      number: 1
+      label: LABEL_OPTIONAL
+      type: TYPE_MESSAGE
+      type_name: ".containerd.services.netpolicy.v1.PolicyGroup"
+      json_name: "Group"
+    }
+  }
+  service {
+    name: "Policy"
+    method {
+      name: "FetchPolicy"
+      input_type: ".containerd.services.netpolicy.v1.FetchPolicyReq"
+      output_type: ".containerd.services.netpolicy.v1.FetchPolicyResp"
+    }
+  }
+  options {
+    go_package: "github.com/containerd/containerd/api/services/netpolicy/v1;netpolicy"
+  }
+  syntax: "proto3"
+}
+file {
   name: "github.com/containerd/containerd/api/services/sessions/v1/sessions.proto"
   package: "containerd.services.sessions.v1"
   message_type {
@@ -3737,26 +3754,6 @@ file {
     name: "RegisterSessionResponse"
   }
   message_type {
-    name: "VerifyTokenRequest"
-    field {
-      name: "token"
-      number: 1
-      label: LABEL_OPTIONAL
-      type: TYPE_STRING
-      json_name: "token"
-    }
-    field {
-      name: "username"
-      number: 2
-      label: LABEL_OPTIONAL
-      type: TYPE_STRING
-      json_name: "username"
-    }
-  }
-  message_type {
-    name: "VerifyTokenResponse"
-  }
-  message_type {
     name: "VerifySessionRequest"
     field {
       name: "id"
@@ -3791,11 +3788,6 @@ file {
       name: "RegisterSession"
       input_type: ".containerd.services.sessions.v1.RegisterSessionRequest"
       output_type: ".containerd.services.sessions.v1.RegisterSessionResponse"
-    }
-    method {
-      name: "VerifyToken"
-      input_type: ".containerd.services.sessions.v1.VerifyTokenRequest"
-      output_type: ".containerd.services.sessions.v1.VerifyTokenResponse"
     }
     method {
       name: "VerifySession"

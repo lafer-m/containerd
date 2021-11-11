@@ -142,6 +142,8 @@ message ListContainersResponse {
 }
 
 
+message StatusRequest {}
+
 service DacsCRI {
     // Run container
     rpc Run(RunContainerRequest) returns (RunContainerResponse);

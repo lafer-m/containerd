@@ -4,8 +4,8 @@ import (
 	"context"
 	"errors"
 
+	"github.com/containerd/containerd"
 	api "github.com/containerd/containerd/api/services/sessions/v1"
-	"github.com/containerd/containerd/log"
 	"github.com/containerd/containerd/plugin"
 	"github.com/containerd/containerd/services"
 	"google.golang.org/grpc"
@@ -17,7 +17,6 @@ func init() {
 		ID:       "sessions",
 		Requires: []plugin.Type{plugin.ServicePlugin},
 		InitFn: func(ic *plugin.InitContext) (interface{}, error) {
-			log.L.Logger.Info("test session init grpc")
 			plugins, err := ic.GetByType(plugin.ServicePlugin)
 			if err != nil {
 				return nil, err
@@ -30,13 +29,13 @@ func init() {
 			if err != nil {
 				return nil, err
 			}
-			return &service{local: i.(api.SessionsClient)}, nil
+			return &service{local: i.(containerd.SessionClient)}, nil
 		},
 	})
 }
 
 type service struct {
-	local api.SessionsClient
+	local containerd.SessionClient
 }
 
 var _ api.SessionsServer = &service{}
@@ -52,10 +51,6 @@ func (s *service) Auth(ctx context.Context, req *api.AuthRequest) (*api.AuthResp
 
 func (s *service) RegisterSession(ctx context.Context, req *api.RegisterSessionRequest) (*api.RegisterSessionResponse, error) {
 	return s.local.RegisterSession(ctx, req)
-}
-
-func (s *service) VerifyToken(ctx context.Context, req *api.VerifyTokenRequest) (*api.VerifyTokenResponse, error) {
-	return s.local.VerifyToken(ctx, req)
 }
 
 func (s *service) VerifySession(ctx context.Context, req *api.VerifySessionRequest) (*api.VerifySessionResponse, error) {

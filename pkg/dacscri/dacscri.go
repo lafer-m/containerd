@@ -92,6 +92,9 @@ func getServicesOpts(ic *plugin.InitContext) ([]containerd.ServicesOpt, error) {
 		services.LeasesService: func(s interface{}) containerd.ServicesOpt {
 			return containerd.WithLeasesService(s.(leases.Manager))
 		},
+		services.SessionService: func(s interface{}) containerd.ServicesOpt {
+			return containerd.WithSessionService(s.(containerd.SessionClient))
+		},
 	} {
 		p := plugins[s]
 		if p == nil {
