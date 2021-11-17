@@ -1,0 +1,38 @@
+syntax = "proto3";
+
+package proto;
+
+option go_package = "./;proto";
+
+message LoginReq {
+  string Username = 1;
+  string Password = 2;
+  int64 Timestamp = 3;
+}
+
+message LoginResp {
+  string Token = 1; // the user x-session token
+}
+
+message LogoutReq {
+  string Username = 1;
+  string Token = 2;
+}
+
+message LogoutResp {
+}
+
+message VerifyTokenReq{
+  string Token = 1;
+  string Username = 2;
+  int64 Timestamp = 3;
+}
+
+message VerifyTokenResp{
+}
+
+service UserIdentification {
+  rpc Login(LoginReq) returns(LoginResp);
+  rpc Logout(LogoutReq) returns(LogoutResp);
+  rpc VerifyToken(VerifyTokenReq) returns(VerifyTokenResp);
+}

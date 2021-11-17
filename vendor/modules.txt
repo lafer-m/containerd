@@ -81,7 +81,7 @@ github.com/containerd/console
 # github.com/containerd/containerd/api v1.6.0-beta.1 => ./api
 ## explicit
 github.com/containerd/containerd/api/events
-github.com/containerd/containerd/api/services/auth/v1
+github.com/containerd/containerd/api/services/auth/proto
 github.com/containerd/containerd/api/services/containers/v1
 github.com/containerd/containerd/api/services/content/v1
 github.com/containerd/containerd/api/services/dacscri/v1

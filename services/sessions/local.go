@@ -14,7 +14,7 @@ import (
 	"github.com/containerd/containerd/services"
 	"github.com/gogo/protobuf/proto"
 
-	auth "github.com/containerd/containerd/api/services/auth/v1"
+	auth "github.com/containerd/containerd/api/services/auth/proto"
 	api "github.com/containerd/containerd/api/services/sessions/v1"
 	bolt "go.etcd.io/bbolt"
 	"google.golang.org/grpc"

@@ -17,7 +17,7 @@ import (
 	"time"
 
 	"github.com/containerd/containerd"
-	"github.com/containerd/containerd/api/services/auth/v1"
+	"github.com/containerd/containerd/api/services/auth/proto"
 	"github.com/containerd/containerd/api/services/dacscri/v1"
 	criapi "github.com/containerd/containerd/api/services/dacscri/v1"
 	"github.com/containerd/containerd/log"
@@ -284,7 +284,7 @@ func (c *service) getAKSK(token, service string) (string, string, error) {
 	// found from backend
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
-	req := &auth.GetAKSKReq{
+	req := &proto.GetAKSKReq{
 		Token:     token,
 		Timestamp: time.Now().Unix(),
 	}

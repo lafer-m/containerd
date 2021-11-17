@@ -1,7 +1,7 @@
 package containerd
 
 import (
-	auth "github.com/containerd/containerd/api/services/auth/v1"
+	auth "github.com/containerd/containerd/api/services/auth/proto"
 	api "github.com/containerd/containerd/api/services/sessions/v1"
 )
 

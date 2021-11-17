@@ -806,7 +806,7 @@ file {
   syntax: "proto3"
 }
 file {
-  name: "github.com/containerd/containerd/api/services/auth/v1/aksk.proto"
+  name: "github.com/containerd/containerd/api/services/auth/proto/aksk.proto"
   package: "proto"
   message_type {
     name: "GetAKSKReq"
@@ -890,12 +890,12 @@ file {
     }
   }
   options {
-    go_package: "github.com/containerd/containerd/api/services/auth/v1;auth"
+    go_package: "./;proto"
   }
   syntax: "proto3"
 }
 file {
-  name: "github.com/containerd/containerd/api/services/auth/v1/identities.proto"
+  name: "github.com/containerd/containerd/api/services/auth/proto/identities.proto"
   package: "proto"
   message_type {
     name: "LoginReq"
@@ -997,7 +997,7 @@ file {
     }
   }
   options {
-    go_package: "github.com/containerd/containerd/api/services/auth/v1;auth"
+    go_package: "./;proto"
   }
   syntax: "proto3"
 }

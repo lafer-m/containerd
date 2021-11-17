@@ -8,8 +8,7 @@ import (
 	"strings"
 	"time"
 
-	api "github.com/containerd/containerd/api/services/auth/v1"
-	auth "github.com/containerd/containerd/api/services/auth/v1"
+	api "github.com/containerd/containerd/api/services/auth/proto"
 	"github.com/containerd/containerd/defaults"
 	"github.com/pkg/errors"
 	"google.golang.org/grpc"
@@ -53,15 +52,15 @@ func (b *backend) VerifyToken(ctx context.Context, in *api.VerifyTokenReq, opts 
 type aksk struct {
 }
 
-func (l *aksk) GetServiceAKSK(ctx context.Context, in *auth.GetAKSKReq, opts ...grpc.CallOption) (*auth.GetAKSKResp, error) {
-	return &auth.GetAKSKResp{
+func (l *aksk) GetServiceAKSK(ctx context.Context, in *api.GetAKSKReq, opts ...grpc.CallOption) (*api.GetAKSKResp, error) {
+	return &api.GetAKSKResp{
 		AccessKeyId:     "abcd",
 		SecretAccessKey: "bcde",
 	}, nil
 }
 
-func (l *aksk) VerifyServiceAKSK(ctx context.Context, in *auth.VerifyAKSKReq, opts ...grpc.CallOption) (*auth.VerifyASKSResp, error) {
-	return &auth.VerifyASKSResp{}, nil
+func (l *aksk) VerifyServiceAKSK(ctx context.Context, in *api.VerifyAKSKReq, opts ...grpc.CallOption) (*api.VerifyASKSResp, error) {
+	return &api.VerifyASKSResp{}, nil
 }
 
 // for now without tls
