@@ -733,6 +733,11 @@ func (s *service) Stats(ctx context.Context, r *taskAPI.StatsRequest) (*taskAPI.
 	}, nil
 }
 
+func (s *service) SetNetPolicy(ctx context.Context, req *taskAPI.SetNetPolicyRequest) (*ptypes.Empty, error) {
+
+	return &ptypes.Empty{}, nil
+}
+
 func (s *service) processExits() {
 	for e := range s.ec {
 		s.checkProcesses(e)

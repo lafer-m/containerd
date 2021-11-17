@@ -137,3 +137,7 @@ func (s *service) Update(ctx context.Context, r *taskAPI.UpdateTaskRequest) (*pt
 func (s *service) Wait(ctx context.Context, r *taskAPI.WaitRequest) (*taskAPI.WaitResponse, error) {
 	return nil, errdefs.ErrNotImplemented
 }
+
+func (s *service) SetNetPolicy(ctx context.Context, req *taskAPI.SetNetPolicyRequest) (*ptypes.Empty, error) {
+	return &ptypes.Empty{}, nil
+}

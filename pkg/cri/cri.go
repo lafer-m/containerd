@@ -46,19 +46,19 @@ import (
 
 // TODO(random-liu): Use github.com/pkg/errors for our errors.
 // Register CRI service plugin
-func init() {
-	config := criconfig.DefaultConfig()
-	plugin.Register(&plugin.Registration{
-		Type:   plugin.GRPCPlugin,
-		ID:     "cri",
-		Config: &config,
-		Requires: []plugin.Type{
-			plugin.EventPlugin,
-			plugin.ServicePlugin,
-		},
-		InitFn: initCRIService,
-	})
-}
+// func init() {
+// 	config := criconfig.DefaultConfig()
+// 	plugin.Register(&plugin.Registration{
+// 		Type:   plugin.GRPCPlugin,
+// 		ID:     "cri",
+// 		Config: &config,
+// 		Requires: []plugin.Type{
+// 			plugin.EventPlugin,
+// 			plugin.ServicePlugin,
+// 		},
+// 		InitFn: initCRIService,
+// 	})
+// }
 
 func initCRIService(ic *plugin.InitContext) (interface{}, error) {
 	ic.Meta.Platforms = []imagespec.Platform{platforms.DefaultSpec()}

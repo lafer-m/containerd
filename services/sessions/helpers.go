@@ -11,18 +11,16 @@ import (
 	api "github.com/containerd/containerd/api/services/auth/v1"
 	auth "github.com/containerd/containerd/api/services/auth/v1"
 	"github.com/containerd/containerd/defaults"
-	"github.com/containerd/containerd/pkg/dialer"
 	"github.com/pkg/errors"
 	"google.golang.org/grpc"
-	"google.golang.org/grpc/backoff"
+	"google.golang.org/grpc/credentials"
 )
 
 // Sessions provides configuration for sessions
 type SessionConfig struct {
 	IdentifyAddress string `toml:"identify_address"`
-	TLSCA           string `toml:"tls_ca"`
 	TLSCert         string `toml:"tls_cert"`
-	TLSKey          string `toml:"tls_key"`
+	Insecure        bool   `toml:"insecure"`
 	MaxRecvMsgSize  int    `toml:"max_recv_message_size"`
 	MaxSendMsgSize  int    `toml:"max_send_message_size"`
 	Debug           bool   `toml:"debug"`
@@ -31,7 +29,7 @@ type SessionConfig struct {
 func (s *SessionConfig) String() string {
 	ct := &strings.Builder{}
 	ct.WriteString(fmt.Sprintf("backend address %s\n", s.IdentifyAddress))
-	ct.WriteString(fmt.Sprintf("tls files ca: %s, cert: %s, key: %s\n", s.TLSCA, s.TLSCert, s.TLSKey))
+	ct.WriteString(fmt.Sprintf("tls files insecure: %v, cert: %s\n", s.Insecure, s.TLSCert))
 	return ct.String()
 }
 
@@ -68,26 +66,34 @@ func (l *aksk) VerifyServiceAKSK(ctx context.Context, in *auth.VerifyAKSKReq, op
 
 // for now without tls
 func ConnectToBackend(cfg *SessionConfig) (*grpc.ClientConn, error) {
-	backoffConfig := backoff.DefaultConfig
-	backoffConfig.MaxDelay = 3 * time.Second
-	connParams := grpc.ConnectParams{
-		Backoff: backoffConfig,
-	}
-
+	// backoffConfig := backoff.DefaultConfig
+	// backoffConfig.MaxDelay = 3 * time.Second
+	// connParams := grpc.ConnectParams{
+	// 	Backoff: backoffConfig,
+	// }
 	gopts := []grpc.DialOption{
 		grpc.WithBlock(),
-		grpc.WithInsecure(),
-		grpc.FailOnNonTempDialError(true),
-		grpc.WithConnectParams(connParams),
-		grpc.WithContextDialer(dialer.ContextDialer),
-		grpc.WithReturnConnectionError(),
+		// grpc.FailOnNonTempDialError(true),
+		// grpc.WithConnectParams(connParams),
+		// grpc.WithContextDialer(dialer.ContextDialer),
+		// grpc.WithReturnConnectionError(),
 
 		// TODO(stevvooe): We may need to allow configuration of this on the client.
 		grpc.WithDefaultCallOptions(grpc.MaxCallRecvMsgSize(defaults.DefaultMaxRecvMsgSize)),
 		grpc.WithDefaultCallOptions(grpc.MaxCallSendMsgSize(defaults.DefaultMaxSendMsgSize)),
 	}
 
-	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	if cfg.Insecure {
+		gopts = append(gopts, grpc.WithInsecure())
+	} else {
+		creds, err := credentials.NewClientTLSFromFile(cfg.TLSCert, "patrick")
+		if err != nil {
+			return nil, err
+		}
+		gopts = append(gopts, grpc.WithTransportCredentials(creds))
+	}
+
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()
 	conn, err := grpc.DialContext(ctx, cfg.IdentifyAddress, gopts...)
 	if err != nil {

@@ -222,6 +222,10 @@ func (s *service) StartShim(ctx context.Context, opts shim.StartOpts) (_ string,
 	return address, nil
 }
 
+func (s *service) SetNetPolicy(ctx context.Context, req *taskAPI.SetNetPolicyRequest) (*ptypes.Empty, error) {
+	return &ptypes.Empty{}, nil
+}
+
 func (s *service) Cleanup(ctx context.Context) (*taskAPI.DeleteResponse, error) {
 	if address, err := shim.ReadAddress("address"); err == nil {
 		if err = shim.RemoveSocket(address); err != nil {

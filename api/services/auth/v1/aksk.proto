@@ -1,6 +1,6 @@
 syntax = "proto3";
 
-package containerd.services.auth.v1;
+package proto;
 
 option go_package = "github.com/containerd/containerd/api/services/auth/v1;auth";
 

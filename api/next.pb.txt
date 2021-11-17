@@ -807,7 +807,7 @@ file {
 }
 file {
   name: "github.com/containerd/containerd/api/services/auth/v1/aksk.proto"
-  package: "containerd.services.auth.v1"
+  package: "proto"
   message_type {
     name: "GetAKSKReq"
     field {
@@ -880,13 +880,13 @@ file {
     name: "ServiceAuth"
     method {
       name: "GetServiceAKSK"
-      input_type: ".containerd.services.auth.v1.GetAKSKReq"
-      output_type: ".containerd.services.auth.v1.GetAKSKResp"
+      input_type: ".proto.GetAKSKReq"
+      output_type: ".proto.GetAKSKResp"
     }
     method {
       name: "VerifyServiceAKSK"
-      input_type: ".containerd.services.auth.v1.VerifyAKSKReq"
-      output_type: ".containerd.services.auth.v1.VerifyASKSResp"
+      input_type: ".proto.VerifyAKSKReq"
+      output_type: ".proto.VerifyASKSResp"
     }
   }
   options {
@@ -896,7 +896,7 @@ file {
 }
 file {
   name: "github.com/containerd/containerd/api/services/auth/v1/identities.proto"
-  package: "containerd.services.auth.v1"
+  package: "proto"
   message_type {
     name: "LoginReq"
     field {
@@ -982,18 +982,18 @@ file {
     name: "UserIdentification"
     method {
       name: "Login"
-      input_type: ".containerd.services.auth.v1.LoginReq"
-      output_type: ".containerd.services.auth.v1.LoginResp"
+      input_type: ".proto.LoginReq"
+      output_type: ".proto.LoginResp"
     }
     method {
       name: "Logout"
-      input_type: ".containerd.services.auth.v1.LogoutReq"
-      output_type: ".containerd.services.auth.v1.LogoutResp"
+      input_type: ".proto.LogoutReq"
+      output_type: ".proto.LogoutResp"
     }
     method {
       name: "VerifyToken"
-      input_type: ".containerd.services.auth.v1.VerifyTokenReq"
-      output_type: ".containerd.services.auth.v1.VerifyTokenResp"
+      input_type: ".proto.VerifyTokenReq"
+      output_type: ".proto.VerifyTokenResp"
     }
   }
   options {
