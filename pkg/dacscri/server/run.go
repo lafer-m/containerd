@@ -64,14 +64,12 @@ func (c *service) Run(ctx context.Context, req *criapi.RunContainerRequest) (*cr
 		return nil, ErrNotFoundAKSK
 	}
 
-	defer func() {
-		if err := c.storeAKSK(ak, sk, req.App.Type); err != nil {
-			log.G(ctx).Errorf("store ak/sk error")
-		}
-	}()
+	if err := c.storeAKSK(ak, sk, req.App.Type); err != nil {
+		log.G(ctx).Errorf("store ak/sk error")
+	}
 
 	// for http download app tar file
-	downAppToken := signToken(sk, fmt.Sprintf("%s%d", "test", time.Now().Unix()))
+	downAppToken := signToken(sk, fmt.Sprintf("%s%d", "", time.Now().Unix()))
 	image := defaultImage
 	if req.Image != "" {
 		image = req.Image

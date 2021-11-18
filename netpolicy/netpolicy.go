@@ -4,9 +4,13 @@ import (
 	"context"
 	"time"
 
+	"github.com/containerd/containerd"
+	policy "github.com/containerd/containerd/api/services/auth/proto"
 	"github.com/containerd/containerd/events"
 	"github.com/containerd/containerd/log"
 	"github.com/containerd/containerd/plugin"
+	v2 "github.com/containerd/containerd/runtime/v2"
+	"github.com/containerd/containerd/services"
 )
 
 func init() {
@@ -26,9 +30,26 @@ func init() {
 				return nil, err
 			}
 			subscibeEvent := ev.(events.Subscriber)
+
+			pl, err := ic.Get(plugin.RuntimePluginV2)
+			if err != nil {
+				return nil, err
+			}
+
+			back, err := ic.GetByID(plugin.ServicePlugin, services.SessionService)
+			if err != nil {
+				return nil, err
+			}
+
 			svc := &service{
 				cfg:       cfg,
 				subscribe: subscibeEvent,
+				runtime:   pl.(*v2.TaskManager),
+				backend:   back.(containerd.SessionClient),
+				policys:   map[string]*policyVersion{},
+			}
+			if err := svc.loadServicesExist(); err != nil {
+				log.L.Warnf("load exist service err: %v", err)
 			}
 			go svc.run()
 			return svc, nil
@@ -36,9 +57,18 @@ func init() {
 	)
 }
 
+type policyVersion struct {
+	service string
+	version string
+	policys *policy.PolicyGroup
+}
+
 type service struct {
 	cfg       *Config
 	subscribe events.Subscriber
+	runtime   *v2.TaskManager
+	backend   containerd.SessionClient
+	policys   map[string]*policyVersion
 }
 
 // timer ticker running
@@ -57,7 +87,41 @@ func (s *service) run() {
 			log.L.Infof("events: %v, %s", ev.Event, ev.Topic)
 		case e := <-err:
 			log.L.Infof("event err: %v", e)
+			// resubscribe
+			sub, err = s.subscribe.Subscribe(context.Background())
 		}
 	}
+}
 
+func (s *service) syncAll() error {
+
+	return nil
+}
+
+func (s *service) loadServicesExist() error {
+	svcs, err := s.backend.ListService()
+	if err != nil {
+		return err
+	}
+
+	for _, svc := range svcs {
+		ak, sk, err := s.backend.GetAKSKLocal(svc)
+		if err != nil {
+			log.L.Warnf("load exsiting service err: %v", err)
+			continue
+		}
+		req := newNetPolicyRequest(ak, sk)
+		resp, err := s.backend.FetchPolicy(context.Background(), req)
+		if err != nil {
+			log.L.Warnf("get policy err: %v", err)
+			continue
+		}
+		pv := &policyVersion{
+			service: svc,
+			version: hashObject(resp.Group),
+			policys: resp.Group,
+		}
+		s.policys[svc] = pv
+	}
+	return nil
 }

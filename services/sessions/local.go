@@ -105,6 +105,7 @@ func init() {
 
 				local.akskAuth = auth.NewServiceAuthClient(conn)
 				local.identifyAuth = auth.NewUserIdentificationClient(conn)
+				local.policy = auth.NewPolicyClient(conn)
 			}
 			return local, nil
 		},
@@ -115,6 +116,7 @@ type local struct {
 	db           *bolt.DB
 	akskAuth     auth.ServiceAuthClient
 	identifyAuth auth.UserIdentificationClient
+	policy       auth.PolicyClient
 }
 
 var _ containerd.SessionClient = &local{}
@@ -237,6 +239,10 @@ func (l *local) VerifySession(ctx context.Context, in *api.VerifySessionRequest,
 }
 
 // client proxy
+func (l *local) FetchPolicy(ctx context.Context, in *auth.FetchPolicyReq, opts ...grpc.CallOption) (*auth.FetchPolicyResp, error) {
+	return l.policy.FetchPolicy(ctx, in)
+}
+
 func (l *local) GetServiceAKSK(ctx context.Context, in *auth.GetAKSKReq, opts ...grpc.CallOption) (*auth.GetAKSKResp, error) {
 	return l.akskAuth.GetServiceAKSK(ctx, in)
 }
@@ -311,4 +317,21 @@ func (l *local) GetAKSKLocal(service string) (string, string, error) {
 	}
 
 	return ak, sk, nil
+}
+
+func (l *local) ListService() ([]string, error) {
+	svcs := []string{}
+	if err := l.db.Update(func(t *bolt.Tx) error {
+		bk := t.Bucket([]byte(version)).Bucket([]byte(serviceBucket))
+		if err := bk.ForEach(func(k, v []byte) error {
+			svcs = append(svcs, string(k))
+			return nil
+		}); err != nil {
+			return err
+		}
+		return nil
+	}); err != nil {
+		return nil, err
+	}
+	return svcs, nil
 }

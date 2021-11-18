@@ -1,18 +1,36 @@
 syntax = "proto3";
 
-package containerd.services.netpolicy.v1;
+package proto;
 
 
-option go_package = "github.com/containerd/containerd/api/services/netpolicy/v1;netpolicy";
+option go_package = "./;proto";
 
+
+enum NetPolicyType{
+  IP = 0;
+  Segment = 1;
+}
+
+enum NetPolicyProtocol {
+  TCP = 0;
+  UDP = 1;
+}
+
+enum DefaultNetPolicy {
+  Permit = 0;
+  Deny = 1;
+}
 
 message NetPolicy {
   // 指定策略类型 IP 网段
-  string Type = 1;
+  NetPolicyType Type = 1;
   // 在哪个协议上生效 tcp/udp
-  string Protocol = 2;
+  NetPolicyProtocol Protocol = 2;
   // 作用的端口
-  int32  Port = 3;
+  // 支持单个端口 80
+  // 支持多个端口. 以 逗号 分割, 80,81
+  // 支持端口范围 8080-8088
+  string  Port = 3;
   // ip地址
   string Value = 4;
   // 允许访问, 或者拒绝
@@ -26,6 +44,8 @@ message PolicyGroup {
   // 策略组名称
   string Name = 1;
   repeated NetPolicy NetworkPolicy = 2;
+  // 默认策略类型, 全部放行或者全部拦截
+  DefaultNetPolicy Default = 3;
 }
 
 message FetchPolicyReq {
@@ -36,7 +56,7 @@ message FetchPolicyReq {
 }
 
 message FetchPolicyResp {
-  PolicyGroup Group = 1;
+  repeated PolicyGroup Group = 1;
 }
 
 service Policy {

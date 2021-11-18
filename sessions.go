@@ -9,6 +9,8 @@ type SessionClient interface {
 	api.SessionsClient
 	auth.ServiceAuthClient
 	auth.UserIdentificationClient
+	auth.PolicyClient
 	StoreAKSK(ak, sk, service string) error
 	GetAKSKLocal(service string) (string, string, error)
+	ListService() ([]string, error)
 }
