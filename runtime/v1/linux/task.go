@@ -21,6 +21,7 @@ package linux
 
 import (
 	"context"
+	"fmt"
 	"sync"
 
 	"github.com/containerd/cgroups"
@@ -364,4 +365,8 @@ func (t *Task) Wait(ctx context.Context) (*runtime.Exit, error) {
 		Timestamp: r.ExitedAt,
 		Status:    r.ExitStatus,
 	}, nil
+}
+
+func (s *Task) SetNetPolicy(ctx context.Context, service, policys string) error {
+	return fmt.Errorf("not implement")
 }

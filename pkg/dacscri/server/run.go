@@ -1,6 +1,7 @@
 package server
 
 import (
+	"archive/tar"
 	"context"
 	"crypto/hmac"
 	"crypto/md5"
@@ -9,6 +10,7 @@ import (
 	"fmt"
 	"io"
 	"io/ioutil"
+	"net/http"
 	"net/url"
 	"os"
 	"path/filepath"
@@ -118,7 +120,7 @@ func (c *service) Run(ctx context.Context, req *criapi.RunContainerRequest) (*cr
 
 	opts = append(opts, rootfsOpts...)
 	cOpts = append(cOpts, rootfsCOpts...)
-	mountOpts, err := generateMountOpts(ctx, c.client, ensuredImage, id, req, downAppToken)
+	mountOpts, err := generateMountOpts(ctx, c.client, ensuredImage, id, req, downAppToken, ak)
 	if err != nil {
 		return nil, err
 	}
@@ -388,7 +390,7 @@ func generateLogURI(dataStore string) (*url.URL, error) {
 	return cio.LogURIGenerator("binary", nerdctl, args)
 }
 
-func generateMountOpts(ctx context.Context, client *containerd.Client, ensuredImage *utils.EnsuredImage, id string, req *criapi.RunContainerRequest, token string) ([]oci.SpecOpts, error) {
+func generateMountOpts(ctx context.Context, client *containerd.Client, ensuredImage *utils.EnsuredImage, id string, req *criapi.RunContainerRequest, token, ak string) ([]oci.SpecOpts, error) {
 	//nolint:golint,prealloc
 	var (
 		opts []oci.SpecOpts
@@ -432,7 +434,7 @@ func generateMountOpts(ctx context.Context, client *containerd.Client, ensuredIm
 		}
 	}
 
-	encrpts, err := ensureEncrpts(id, req)
+	encrpts, err := ensureEncrpts(id, token, ak, req)
 	if err != nil {
 		return nil, err
 	}
@@ -442,7 +444,7 @@ func generateMountOpts(ctx context.Context, client *containerd.Client, ensuredIm
 }
 
 // ensureEncrpts mount encrpt file systems
-func ensureEncrpts(id string, req *criapi.RunContainerRequest) (specs.Mount, error) {
+func ensureEncrpts(id, token, ak string, req *criapi.RunContainerRequest) (specs.Mount, error) {
 	var mt specs.Mount
 	dataStore, err := utils.GetDataStore()
 	if err != nil {
@@ -473,7 +475,53 @@ func ensureEncrpts(id string, req *criapi.RunContainerRequest) (specs.Mount, err
 			return mt, err
 		}
 	} else {
-		// should download here
+		// should download app tar
+		request, err := http.NewRequest("GET", req.App.TarUrl, nil)
+		if err != nil {
+			return mt, err
+		}
+
+		timeStr := fmt.Sprintf("%d", time.Now().Unix())
+		q := request.URL.Query()
+		q.Add("ak", ak)
+		q.Add("msg", "")
+		q.Add("time", timeStr)
+		q.Add("sig", token)
+		request.URL.RawQuery = q.Encode()
+		client := http.DefaultClient
+		response, err := client.Do(request)
+		if err != nil {
+			return mt, err
+		}
+
+		defer response.Body.Close()
+		// only support tar file for now
+		tarReader := tar.NewReader(response.Body)
+		for {
+			header, err := tarReader.Next()
+			if err == io.EOF {
+				break
+			}
+			if err != nil {
+				return mt, err
+			}
+			switch header.Typeflag {
+			case tar.TypeDir:
+				if err := os.Mkdir(filepath.Join(encrptPath, header.Name), 0755); err != nil {
+					return mt, err
+				}
+			case tar.TypeReg:
+				outFile, err := os.Create(filepath.Join(encrptPath, header.Name))
+				if err != nil {
+					return mt, err
+				}
+				if _, err := io.Copy(outFile, tarReader); err != nil {
+					return mt, err
+				}
+				outFile.Close()
+			default:
+			}
+		}
 	}
 
 	mt = specs.Mount{

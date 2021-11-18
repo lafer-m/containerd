@@ -373,6 +373,20 @@ func (s *shim) Exec(ctx context.Context, id string, opts runtime.ExecOpts) (runt
 	}, nil
 }
 
+func (s *shim) SetNetPolicy(ctx context.Context, service, policys string) error {
+	req := &task.SetNetPolicyRequest{
+		ID: s.ID(),
+		Netpolicy: &task.NetPolicy{
+			Service: service,
+			Policys: policys,
+		},
+	}
+	if _, err := s.task.SetNetPolicy(ctx, req); err != nil {
+		return err
+	}
+	return nil
+}
+
 func (s *shim) Pids(ctx context.Context) ([]runtime.ProcessInfo, error) {
 	resp, err := s.task.Pids(ctx, &task.PidsRequest{
 		ID: s.ID(),

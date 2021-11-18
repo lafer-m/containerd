@@ -204,7 +204,7 @@ message ResumeRequest {
 
 message NetPolicy {
 	string service = 1;
-	google.protobuf.Any policys = 2;
+	string policys = 2;
 }
 
 message SetNetPolicyRequest {

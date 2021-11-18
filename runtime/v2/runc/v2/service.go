@@ -734,7 +734,20 @@ func (s *service) Stats(ctx context.Context, r *taskAPI.StatsRequest) (*taskAPI.
 }
 
 func (s *service) SetNetPolicy(ctx context.Context, req *taskAPI.SetNetPolicyRequest) (*ptypes.Empty, error) {
+	cwd, err := os.Getwd()
+	if err != nil {
+		return nil, err
+	}
 
+	path := filepath.Join(filepath.Dir(cwd), s.id)
+	runtime, err := runc.ReadRuntime(path)
+	if err != nil {
+		return nil, err
+	}
+	binary := newNetPolicyBinary(s.id, runtime, req.Netpolicy.Policys)
+	if err := binary.start(); err != nil {
+		return nil, err
+	}
 	return &ptypes.Empty{}, nil
 }
 

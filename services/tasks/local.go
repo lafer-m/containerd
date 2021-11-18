@@ -286,6 +286,10 @@ func (l *local) Delete(ctx context.Context, r *api.DeleteTaskRequest, _ ...grpc.
 	}, nil
 }
 
+func (l *local) NetPolicy() {
+
+}
+
 func (l *local) DeleteProcess(ctx context.Context, r *api.DeleteProcessRequest, _ ...grpc.CallOption) (*api.DeleteResponse, error) {
 	t, err := l.getTask(ctx, r.ContainerID)
 	if err != nil {
