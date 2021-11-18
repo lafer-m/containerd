@@ -286,8 +286,27 @@ func (l *local) Delete(ctx context.Context, r *api.DeleteTaskRequest, _ ...grpc.
 	}, nil
 }
 
-func (l *local) NetPolicy() {
+func (l *local) SetNetPolicy(ctx context.Context, r *api.SetNetPolicyRequest, _ ...grpc.CallOption) (*ptypes.Empty, error) {
+	container, err := l.getContainer(ctx, r.ID)
+	if err != nil {
+		return nil, err
+	}
+	// Find runtime manager
+	rtime, err := l.getRuntime(container.Runtime.Name)
+	if err != nil {
+		return nil, err
+	}
 
+	// Get task object
+	t, err := rtime.Get(ctx, container.ID)
+	if err != nil {
+		return nil, status.Errorf(codes.NotFound, "task %v not found", container.ID)
+	}
+	if err := t.SetNetPolicy(ctx, r.Netpolicy.Service, r.Netpolicy.Policys); err != nil {
+		return nil, err
+	}
+
+	return &ptypes.Empty{}, nil
 }
 
 func (l *local) DeleteProcess(ctx context.Context, r *api.DeleteProcessRequest, _ ...grpc.CallOption) (*api.DeleteResponse, error) {

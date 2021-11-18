@@ -4911,6 +4911,41 @@ file {
       json_name: "exitedAt"
     }
   }
+  message_type {
+    name: "NetPolicy"
+    field {
+      name: "service"
+      number: 1
+      label: LABEL_OPTIONAL
+      type: TYPE_STRING
+      json_name: "service"
+    }
+    field {
+      name: "policys"
+      number: 2
+      label: LABEL_OPTIONAL
+      type: TYPE_STRING
+      json_name: "policys"
+    }
+  }
+  message_type {
+    name: "SetNetPolicyRequest"
+    field {
+      name: "id"
+      number: 1
+      label: LABEL_OPTIONAL
+      type: TYPE_STRING
+      json_name: "id"
+    }
+    field {
+      name: "netpolicy"
+      number: 2
+      label: LABEL_OPTIONAL
+      type: TYPE_MESSAGE
+      type_name: ".containerd.services.tasks.v1.NetPolicy"
+      json_name: "netpolicy"
+    }
+  }
   service {
     name: "Tasks"
     method {
@@ -4997,6 +5032,11 @@ file {
       name: "Wait"
       input_type: ".containerd.services.tasks.v1.WaitRequest"
       output_type: ".containerd.services.tasks.v1.WaitResponse"
+    }
+    method {
+      name: "SetNetPolicy"
+      input_type: ".containerd.services.tasks.v1.SetNetPolicyRequest"
+      output_type: ".google.protobuf.Empty"
     }
   }
   options {
