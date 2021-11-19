@@ -7,7 +7,7 @@ import (
 )
 
 func Test_aes(t *testing.T) {
-	origin := "tesxsadwkawjdhwaudkdwaudttt"
+	origin := "dawdawdljdwadwakdjwdwadjilwahidwahidwadwaqildiawdiliwadiqi"
 	a, err := AesEncrypt([]byte(origin))
 	if err != nil {
 		t.Fatal(err)

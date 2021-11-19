@@ -16,9 +16,14 @@ enum NetPolicyProtocol {
   UDP = 1;
 }
 
-enum DefaultNetPolicy {
+enum NetPolicyAccessType {
   Permit = 0;
   Deny = 1;
+}
+
+enum PolicyDirection {
+  Input = 0;
+  Output = 1;
 }
 
 message NetPolicy {
@@ -34,9 +39,11 @@ message NetPolicy {
   // ip地址
   string Value = 4;
   // 允许访问, 或者拒绝
-  string AccessType = 5;
+  NetPolicyAccessType AccessType = 5;
   // 是否使用
   bool IsActive = 6;
+  // 策略的方向, input or output
+  PolicyDirection Direction = 7;
 }
 
 
@@ -45,7 +52,7 @@ message PolicyGroup {
   string Name = 1;
   repeated NetPolicy NetworkPolicy = 2;
   // 默认策略类型, 全部放行或者全部拦截
-  DefaultNetPolicy Default = 3;
+  NetPolicyAccessType Default = 3;
 }
 
 message FetchPolicyReq {

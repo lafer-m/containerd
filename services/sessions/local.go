@@ -2,6 +2,7 @@ package sessions
 
 import (
 	"context"
+	"encoding/hex"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -306,11 +307,13 @@ func (l *local) GetAKSKLocal(service string) (string, string, error) {
 	}
 
 	if ak != "" && sk != "" {
-		ak, err = aesutil.AesDecrypt([]byte(ak))
+		a, _ := hex.DecodeString(ak)
+		ak, err = aesutil.AesDecrypt([]byte(a))
 		if err != nil {
 			return "", "", err
 		}
-		sk, err = aesutil.AesDecrypt([]byte(sk))
+		s, _ := hex.DecodeString(sk)
+		sk, err = aesutil.AesDecrypt([]byte(s))
 		if err != nil {
 			return "", "", err
 		}

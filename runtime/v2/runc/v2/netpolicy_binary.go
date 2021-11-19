@@ -4,42 +4,6 @@ import (
 	"os/exec"
 )
 
-type Action string
-
-const (
-	Drop   Action = "drop"
-	Accept        = "accept"
-	Reject        = "reject"
-)
-
-// ReplaceIPTableArg
-type ReplaceIPTableArg struct {
-	// only support filter table for now
-	Table string `json:"table"`
-
-	InputRules  Rules `json:"input_rules"`
-	OutputRules Rules `json:"output_rules"`
-}
-
-type Rules struct {
-	DefaultDrop bool   `json:"default_drop"`
-	Rules       []Rule `json:"rules"`
-}
-
-type Rule struct {
-	// only support tcp/udp for now
-	Protocol     string `json:"protocol"`
-	Action       Action `json:"action"`
-	Dst          string `json:"dst"`
-	DstMask      string `json:"dst_mask"`
-	Src          string `json:"src"`
-	SrcMask      string `json:"src_mask"`
-	SrcPortStart uint16 `json:"src_port_start"`
-	SrcPortEnd   uint16 `json:"src_port_end"`
-	DstPortStart uint16 `json:"dst_port_start"`
-	DstPortEnd   uint16 `json:"dst_port_end"`
-}
-
 type netpolicyBinary struct {
 	runtime string
 	id      string
