@@ -4,13 +4,14 @@ import (
 	"bytes"
 	"errors"
 	"fmt"
-	"github.com/containerd/containerd/pkg/util/fs/lock"
-	"github.com/google/uuid"
 	"os"
 	"os/exec"
 	"strings"
 	"syscall"
 	"time"
+
+	"github.com/containerd/containerd/pkg/util/fs/lock"
+	"github.com/google/uuid"
 
 	"github.com/containerd/containerd/pkg/util/bin"
 	"github.com/containerd/containerd/pkg/util/fs"
@@ -51,7 +52,7 @@ func createLoop(path string, offset, size uint64) (string, int, error) {
 	return fmt.Sprintf("/dev/loop%d", idx), *loopDev.fd, nil
 }
 
-func (crypt *CryptDevice) CreateSecureFS(path string, sizeInGB int64, key []byte) error {
+func (crypt *CryptDevice) CreateSecureFS(path string, sizeInMB int64, key []byte) error {
 	exist, err := fs.PathExists(path)
 	if err != nil {
 		return fmt.Errorf("failed to check path existence %s", path)
@@ -77,7 +78,7 @@ func (crypt *CryptDevice) CreateSecureFS(path string, sizeInGB int64, key []byte
 	// of the data we are encrypting. For very large images, we
 	// might not be overallocating enough. Figure out what's the
 	// actual percentage we need to overallocate.
-	devSize := sizeInGB*1024*1024*1024 + 16*1024*1024
+	devSize := sizeInMB*1024*1024 + 16*1024*1024
 
 	logrus.Debugf("Total device size for encrypted image: %d", devSize)
 	err = os.Truncate(path, devSize)
@@ -131,7 +132,7 @@ func (crypt *CryptDevice) CreateSecureFS(path string, sizeInGB int64, key []byte
 		return err
 	}
 
-	cmd = exec.Command("mkfs.ext4", "/dev/mapper/" + nextCrypt)
+	cmd = exec.Command("mkfs.ext4", "/dev/mapper/"+nextCrypt)
 	err = cmd.Run()
 	if err != nil {
 		return err
@@ -154,11 +155,13 @@ func (crypt *CryptDevice) OpenSecureFS(path string, mountPoint string, key []byt
 		return "", err
 	}
 
-	cmd := exec.Command("mount", "/dev/mapper/" + nextCrypt, mountPoint)
+	cmd := exec.Command("mount", "/dev/mapper/"+nextCrypt, mountPoint)
 	logrus.Debugf("Running %s %s", cmd.Path, strings.Join(cmd.Args, " "))
 	err = cmd.Run()
+
 	if err != nil {
-		logrus.Debugf("Unable to mount %s: %s", mountPoint, err)
+		// logrus.Debugf("Unable to mount %s: %s", mountPoint, err)
+		fmt.Errorf("Unable to mount %s: %v", mountPoint, err)
 		cmd = exec.Command("cryptsetup", "close", nextCrypt)
 		logrus.Debugf("Running %s %s", cmd.Path, strings.Join(cmd.Args, " "))
 		_ = cmd.Run()
@@ -235,7 +238,6 @@ func checkCryptsetupVersion(cryptsetup string) error {
 	return nil
 }
 
-
 func getNextAvailableCryptDevice() (string, error) {
 	id, err := uuid.NewRandom()
 	if err != nil {
@@ -244,7 +246,6 @@ func getNextAvailableCryptDevice() (string, error) {
 
 	return id.String(), nil
 }
-
 
 // Open opens the encrypted filesystem specified by path (usually a loop
 // device, but any encrypted block device will do) using the given key
@@ -282,7 +283,7 @@ func (crypt *CryptDevice) open(key []byte, path string) (string, error) {
 		logrus.Debugf("Running %s %s", cmd.Path, strings.Join(cmd.Args, " "))
 
 		cmd.Stdin = bytes.NewBuffer(key)
-    	out, err := cmd.CombinedOutput()
+		out, err := cmd.CombinedOutput()
 		if err != nil {
 			if strings.Contains(string(out), "Device already exists") {
 				continue

@@ -2,11 +2,12 @@ package cryptsetup
 
 import (
 	"fmt"
-	"github.com/sirupsen/logrus"
 	"os"
 	"syscall"
 	"time"
 	"unsafe"
+
+	"github.com/sirupsen/logrus"
 
 	"github.com/containerd/containerd/pkg/util/fs/lock"
 )

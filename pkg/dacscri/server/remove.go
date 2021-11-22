@@ -2,6 +2,7 @@ package server
 
 import (
 	"context"
+	"fmt"
 	"os"
 	"path/filepath"
 	"time"
@@ -12,6 +13,7 @@ import (
 	"github.com/containerd/containerd/errdefs"
 	"github.com/containerd/containerd/log"
 	"github.com/containerd/containerd/namespaces"
+	"github.com/containerd/containerd/pkg/cryptsetup"
 	"github.com/containerd/containerd/pkg/dacscri/utils"
 	"github.com/gogo/protobuf/types"
 	"github.com/pkg/errors"
@@ -180,24 +182,24 @@ func removeContainer(ctx context.Context, client *containerd.Client, ns, id, req
 			logrus.WithError(retErr).Warnf("failed to remove container %q", id)
 		}
 	}()
-	container, err := client.LoadContainer(ctx, id)
-	if err != nil {
-		return err
+	container, retErr := client.LoadContainer(ctx, id)
+	if retErr != nil {
+		return retErr
 	}
 
-	task, err := container.Task(ctx, cio.Load)
-	if err != nil {
-		if errdefs.IsNotFound(err) {
+	task, retErr := container.Task(ctx, cio.Load)
+	if retErr != nil {
+		if errdefs.IsNotFound(retErr) {
 			if container.Delete(ctx, containerd.WithSnapshotCleanup) != nil {
 				return container.Delete(ctx)
 			}
 		}
-		return err
+		return retErr
 	}
 
-	_, err = task.Delete(ctx)
-	if err != nil && !errdefs.IsNotFound(err) {
-		return errors.Wrapf(err, "failed to delete task %v", id)
+	_, retErr = task.Delete(ctx)
+	if retErr != nil && !errdefs.IsNotFound(retErr) {
+		return errors.Wrapf(retErr, "failed to delete task %v", id)
 	}
 
 	var delOpts []containerd.DeleteOpts
@@ -207,6 +209,19 @@ func removeContainer(ctx context.Context, client *containerd.Client, ns, id, req
 
 	if err := container.Delete(ctx, delOpts...); err != nil {
 		return err
+	}
+	// delete encrypt files
+	encrypt, err := cryptsetup.LoadCryptState(filepath.Join(stateDir, CryptState))
+	if err != nil {
+		return err
+	}
+	encrptPath := filepath.Join(dataStore, encrptDir, namespaces.Default, id)
+	img := fmt.Sprintf("%s.img", encrptPath)
+	dev := &cryptsetup.CryptDevice{}
+	retErr = dev.CloseSecureFS(encrypt, encrptPath)
+	if retErr == nil {
+		retErr = os.Remove(img)
+		retErr = os.RemoveAll(encrptPath)
 	}
 	return nil
 }

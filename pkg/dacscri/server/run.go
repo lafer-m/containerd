@@ -33,6 +33,7 @@ import (
 	"github.com/containerd/containerd/namespaces"
 	"github.com/containerd/containerd/oci"
 	pkgapparmor "github.com/containerd/containerd/pkg/apparmor"
+	"github.com/containerd/containerd/pkg/cryptsetup"
 	"github.com/containerd/containerd/pkg/dacscri/utils"
 	"github.com/containerd/containerd/platforms"
 	"github.com/containerd/containerd/plugin"
@@ -51,6 +52,8 @@ const (
 	MagicArgv1      = "_NERDCTL_INTERNAL_LOGGING"
 	nerdctl         = "/usr/bin/dacsctl"
 	ServiceLabelKey = "com.dacs.service"
+	key             = "encryptdumpkey"
+	CryptState      = "crypt.txt"
 )
 
 func (c *service) Run(ctx context.Context, req *criapi.RunContainerRequest) (*criapi.RunContainerResponse, error) {
@@ -69,7 +72,8 @@ func (c *service) Run(ctx context.Context, req *criapi.RunContainerRequest) (*cr
 	}
 
 	// for http download app tar file
-	downAppToken := signToken(sk, fmt.Sprintf("%s%d", "", time.Now().Unix()))
+	timeStamp := time.Now().Unix()
+	downAppToken := signToken(sk, fmt.Sprintf("%s%d", "", timeStamp))
 	image := defaultImage
 	if req.Image != "" {
 		image = req.Image
@@ -118,7 +122,7 @@ func (c *service) Run(ctx context.Context, req *criapi.RunContainerRequest) (*cr
 
 	opts = append(opts, rootfsOpts...)
 	cOpts = append(cOpts, rootfsCOpts...)
-	mountOpts, err := generateMountOpts(ctx, c.client, ensuredImage, id, req, downAppToken, ak)
+	mountOpts, err := generateMountOpts(ctx, c.client, ensuredImage, id, req, downAppToken, ak, timeStamp)
 	if err != nil {
 		return nil, err
 	}
@@ -388,7 +392,7 @@ func generateLogURI(dataStore string) (*url.URL, error) {
 	return cio.LogURIGenerator("binary", nerdctl, args)
 }
 
-func generateMountOpts(ctx context.Context, client *containerd.Client, ensuredImage *utils.EnsuredImage, id string, req *criapi.RunContainerRequest, token, ak string) ([]oci.SpecOpts, error) {
+func generateMountOpts(ctx context.Context, client *containerd.Client, ensuredImage *utils.EnsuredImage, id string, req *criapi.RunContainerRequest, token, ak string, timeStamp int64) ([]oci.SpecOpts, error) {
 	//nolint:golint,prealloc
 	var (
 		opts []oci.SpecOpts
@@ -432,7 +436,7 @@ func generateMountOpts(ctx context.Context, client *containerd.Client, ensuredIm
 		}
 	}
 
-	encrpts, err := ensureEncrpts(id, token, ak, req)
+	encrpts, err := ensureEncrpts(id, token, ak, req, timeStamp)
 	if err != nil {
 		log.L.Errorf("ensure encrpts files err: %v", err)
 		return nil, err
@@ -443,18 +447,42 @@ func generateMountOpts(ctx context.Context, client *containerd.Client, ensuredIm
 }
 
 // ensureEncrpts mount encrpt file systems
-func ensureEncrpts(id, token, ak string, req *criapi.RunContainerRequest) (specs.Mount, error) {
-	var mt specs.Mount
+func ensureEncrpts(id, token, ak string, req *criapi.RunContainerRequest, timeStamp int64) (mt specs.Mount, err error) {
 	dataStore, err := utils.GetDataStore()
 	if err != nil {
-		return mt, err
+		return
 	}
 
 	encrptPath := filepath.Join(dataStore, encrptDir, namespaces.Default, id)
-	if err := os.MkdirAll(encrptPath, 700); err != nil {
-		return mt, err
+	err = os.MkdirAll(encrptPath, 700)
+	if err != nil {
+		return
 	}
 	// TODO should mount encrptPath filesystem
+	encryptIMG := fmt.Sprintf("%s.img", encrptPath)
+	dev := &cryptsetup.CryptDevice{}
+	err = dev.CreateSecureFS(encryptIMG, 10240, []byte(key))
+	if err != nil {
+		return
+	}
+
+	cryptState := filepath.Join(dataStore, "containers", namespaces.Default, id, CryptState)
+	crypt, err := dev.OpenSecureFS(encryptIMG, encrptPath, []byte(key))
+	if err != nil {
+		return
+	}
+
+	err = cryptsetup.StoreCryptState(cryptState, crypt)
+	if err != nil {
+		return
+	}
+
+	defer func() {
+		if err != nil {
+			err = dev.CloseSecureFS(crypt, encrptPath)
+			return
+		}
+	}()
 
 	// TODO download app files and mount encrpt filesystem in here
 	if req.App.TarType == dacscri.TARTYPE_FILE {
@@ -480,7 +508,7 @@ func ensureEncrpts(id, token, ak string, req *criapi.RunContainerRequest) (specs
 			return mt, err
 		}
 
-		timeStr := fmt.Sprintf("%d", time.Now().Unix())
+		timeStr := fmt.Sprintf("%d", timeStamp)
 		q := request.URL.Query()
 		q.Add("ak", ak)
 		q.Add("msg", "")
