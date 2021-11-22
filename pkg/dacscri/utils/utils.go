@@ -30,11 +30,11 @@ func GenerateID() string {
 // getDataStore returns a string like "/var/lib/nerdctl/1935db59".
 // "1935db9" is from `$(echo -n "/run/containerd/containerd.sock" | sha256sum | cut -c1-8)``
 func GetDataStore() (string, error) {
-	dataRoot := "/var/lib/nerdctl"
+	dataRoot := "/var/lib/dacsctl"
 	if err := os.MkdirAll(dataRoot, 0700); err != nil {
 		return "", err
 	}
-	address := "/run/containerd/containerd.sock"
+	address := "/run/dacsd/dacsd.sock"
 	addrHash, err := getAddrHash(address)
 	if err != nil {
 		return "", err

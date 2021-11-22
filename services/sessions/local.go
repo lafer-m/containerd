@@ -7,6 +7,7 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+	"time"
 
 	"github.com/containerd/containerd"
 	"github.com/containerd/containerd/log"
@@ -134,7 +135,7 @@ func (l *local) Auth(ctx context.Context, in *api.AuthRequest, opts ...grpc.Call
 	if in.User == nil {
 		return nil, ErrInvalidParam
 	}
-	resp, err := l.identifyAuth.Login(ctx, &auth.LoginReq{Username: in.User.Username, Password: in.User.Password})
+	resp, err := l.identifyAuth.Login(ctx, &auth.LoginReq{Username: in.User.Username, Password: in.User.Password, Timestamp: time.Now().Unix()})
 	if err != nil {
 		log.G(ctx).Errorf("session login err: %v", err)
 		return nil, ErrInvalidUserOrPassword
@@ -152,7 +153,7 @@ func (l *local) RegisterSession(ctx context.Context, in *api.RegisterSessionRequ
 	}
 
 	// verify token
-	if _, err := l.identifyAuth.VerifyToken(ctx, &auth.VerifyTokenReq{Username: in.Session.Username, Token: in.Session.Token}); err != nil {
+	if _, err := l.identifyAuth.VerifyToken(ctx, &auth.VerifyTokenReq{Username: in.Session.Username, Token: in.Session.Token, Timestamp: time.Now().Unix()}); err != nil {
 		log.G(ctx).Errorf("verify token err: %v", err)
 		return nil, ErrInvalidToken
 	}
@@ -223,7 +224,7 @@ func (l *local) VerifySession(ctx context.Context, in *api.VerifySessionRequest,
 	}
 
 	// check token again, if err just delete the session in boltdb
-	if _, err := l.identifyAuth.VerifyToken(ctx, &auth.VerifyTokenReq{Token: sess.Token, Username: sess.Username}); err != nil {
+	if _, err := l.identifyAuth.VerifyToken(ctx, &auth.VerifyTokenReq{Token: sess.Token, Username: sess.Username, Timestamp: time.Now().Unix()}); err != nil {
 		if err := l.db.Update(func(t *bolt.Tx) error {
 			bk := t.Bucket([]byte(version))
 			sessionBK := bk.Bucket([]byte(BucketName))

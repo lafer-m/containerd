@@ -223,6 +223,19 @@ define BUILD_BINARY
 @$(GO) build ${DEBUG_GO_GCFLAGS} ${GO_GCFLAGS} ${GO_BUILD_FLAGS} -o $@ ${GO_LDFLAGS} ${GO_TAGS}  ./$<
 endef
 
+
+dacsd: bin/dacsd bin/dacsd-shim-runc-v2
+
+bin/dacsd:
+	@echo "$(WHALE) $@"
+	@echo "$(GO) build ${DEBUG_GO_GCFLAGS} ${GO_GCFLAGS} ${GO_BUILD_FLAGS} -o $(OUTPUTDIR)/dacsd ${GO_LDFLAGS} ${GO_TAGS}  "
+	@$(GO) build ${DEBUG_GO_GCFLAGS} ${GO_GCFLAGS} ${GO_BUILD_FLAGS} -o $(OUTPUTDIR)/dacsd ${GO_LDFLAGS} ${GO_TAGS}  $(PACKAGE)/cmd/containerd
+
+bin/dacsd-shim-runc-v2:
+	@echo "$(WHALE) $@"
+	@echo "$(GO) build ${DEBUG_GO_GCFLAGS} ${GO_GCFLAGS} ${GO_BUILD_FLAGS} -o $(OUTPUTDIR)/dacsd-shim-runc-v2 ${GO_LDFLAGS} ${GO_TAGS}  "
+	@$(GO) build ${DEBUG_GO_GCFLAGS} ${GO_GCFLAGS} ${GO_BUILD_FLAGS} -o $(OUTPUTDIR)/dacsd-shim-runc-v2 ${GO_LDFLAGS} ${GO_TAGS}  $(PACKAGE)/cmd/containerd-shim-runc-v2	
+
 # Build a binary from a cmd.
 bin/%: cmd/% FORCE
 	$(call BUILD_BINARY)

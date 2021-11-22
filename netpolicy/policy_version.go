@@ -84,25 +84,30 @@ func (p *policyVersion) parse() (*ReplaceIPTableArg, error) {
 			Protocol: protocol,
 			Action:   ac,
 		}
+		s, e, err := parsePorts(rule.Port)
+		if err != nil && err != ErrNoPort {
+			return nil, err
+		}
+		tRule.DstPortStart = s
+		tRule.DstPortEnd = e
 
 		if rule.Direction == policy.PolicyDirection_Input {
 			tRule.Src = ip
 			tRule.SrcMask = mask
-			s, e, err := parsePorts(rule.Port)
-			if err != nil && err != ErrNoPort {
-				return nil, err
-			}
-			tRule.SrcPortStart = s
-			tRule.SrcPortEnd = e
 			inputRules = append(inputRules, tRule)
-		} else {
-			s, e, err := parsePorts(rule.Port)
-			if err != nil && err != ErrNoPort {
-				return nil, err
+			// auto output Rule
+			if defaultDrop && ac == Accept {
+				outputRules = append(outputRules, generateAutoRule(true, tRule))
 			}
-			tRule.DstPortStart = s
-			tRule.DstPortEnd = e
+
+		} else {
+			tRule.Dst = ip
+			tRule.DstMask = mask
 			outputRules = append(outputRules, tRule)
+			// auto input Rule
+			if defaultDrop && ac == Accept {
+				inputRules = append(inputRules, generateAutoRule(false, tRule))
+			}
 		}
 	}
 
@@ -124,6 +129,26 @@ func (p *policyVersion) parse() (*ReplaceIPTableArg, error) {
 	}
 
 	return request, nil
+}
+
+func generateAutoRule(input bool, rule Rule) Rule {
+	newRule := Rule{
+		Action:   Accept,
+		Protocol: rule.Protocol,
+	}
+	if input {
+		newRule.Dst = rule.Src
+		newRule.DstMask = rule.SrcMask
+		newRule.SrcPortStart = rule.DstPortStart
+		newRule.SrcPortEnd = rule.DstPortEnd
+	} else {
+		newRule.Src = rule.Dst
+		newRule.SrcMask = rule.DstMask
+		newRule.SrcPortStart = rule.DstPortStart
+		newRule.SrcPortEnd = rule.DstPortEnd
+	}
+
+	return newRule
 }
 
 func parseIP(ip string) (string, string, error) {

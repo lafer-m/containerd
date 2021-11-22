@@ -37,7 +37,7 @@ import (
 )
 
 const (
-	shimBinaryFormat = "containerd-shim-%s-%s"
+	shimBinaryFormat = "dacsd-shim-%s-%s"
 	socketPathLimit  = 106
 )
 

@@ -49,7 +49,7 @@ const (
 	defaultImage    = "baseruntime"
 	encrptDir       = "encrpts"
 	MagicArgv1      = "_NERDCTL_INTERNAL_LOGGING"
-	nerdctl         = "/usr/bin/nerdctl"
+	nerdctl         = "/usr/bin/dacsctl"
 	ServiceLabelKey = "com.dacs.service"
 )
 
@@ -361,7 +361,7 @@ func generateRuntimeCopts() []containerd.NewContainerOpts {
 		runcOpts    runcoptions.Options
 		runtimeOpts interface{} = &runcOpts
 	)
-	runcOpts.BinaryName = "runsc"
+	runcOpts.BinaryName = "engine"
 	o := containerd.WithRuntime(runtime, runtimeOpts)
 	return []containerd.NewContainerOpts{o}
 }
@@ -434,6 +434,7 @@ func generateMountOpts(ctx context.Context, client *containerd.Client, ensuredIm
 
 	encrpts, err := ensureEncrpts(id, token, ak, req)
 	if err != nil {
+		log.L.Errorf("ensure encrpts files err: %v", err)
 		return nil, err
 	}
 
