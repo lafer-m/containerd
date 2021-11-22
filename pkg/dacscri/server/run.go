@@ -479,7 +479,7 @@ func ensureEncrpts(id, token, ak string, req *criapi.RunContainerRequest, timeSt
 
 	defer func() {
 		if err != nil {
-			err = dev.CloseSecureFS(crypt, encrptPath)
+			_ = dev.CloseSecureFS(crypt, encrptPath)
 			return
 		}
 	}()
