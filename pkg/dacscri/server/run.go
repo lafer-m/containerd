@@ -47,7 +47,7 @@ import (
 )
 
 const (
-	defaultImage    = "baseruntime"
+	defaultImage    = "baseruntime:v0.0.1"
 	encrptDir       = "encrpts"
 	MagicArgv1      = "_NERDCTL_INTERNAL_LOGGING"
 	nerdctl         = "/usr/bin/dacsctl"

@@ -37,7 +37,10 @@ func (p *policyVersion) parse() (*ReplaceIPTableArg, error) {
 	}
 	// for now only use the first PolicyGroup
 	group := p.policys[0]
+	return ParseGroup(group)
+}
 
+func ParseGroup(group *policy.PolicyGroup) (*ReplaceIPTableArg, error) {
 	defaultDrop := false
 	if group.Default == policy.NetPolicyAccessType_Deny {
 		defaultDrop = true
@@ -72,7 +75,9 @@ func (p *policyVersion) parse() (*ReplaceIPTableArg, error) {
 		switch rule.Type {
 		case policy.NetPolicyType_IP:
 			ip = rule.Value
-			mask = "255.255.255.255"
+			if ip != "" {
+				mask = "255.255.255.255"
+			}
 		case policy.NetPolicyType_Segment:
 			ip, mask, err = parseIP(ip)
 			if err != nil {
