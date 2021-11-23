@@ -122,11 +122,6 @@ func (c *service) Run(ctx context.Context, req *criapi.RunContainerRequest) (*cr
 
 	opts = append(opts, rootfsOpts...)
 	cOpts = append(cOpts, rootfsCOpts...)
-	mountOpts, err := generateMountOpts(ctx, c.client, ensuredImage, id, req, downAppToken, ak, timeStamp)
-	if err != nil {
-		return nil, err
-	}
-	opts = append(opts, mountOpts...)
 
 	var logURI string
 	if lu, err := generateLogURI(dataStore); err != nil {
@@ -252,12 +247,40 @@ func (c *service) Run(ctx context.Context, req *criapi.RunContainerRequest) (*cr
 
 	cOpts = append(cOpts, ilopts)
 	opts = append(opts, propagateContainerdLabelsToOCIAnnotations())
+	mountOpts, err := generateMountOpts(ctx, c.client, ensuredImage, id, req, downAppToken, ak, timeStamp)
+	if err != nil {
+		return nil, err
+	}
+	opts = append(opts, mountOpts...)
+
+	cleanEncrypt := func() error {
+		encrypt, err := cryptsetup.LoadCryptState(filepath.Join(stateDir, CryptState))
+		if err != nil {
+			return err
+		}
+		encrptPath := filepath.Join(dataStore, encrptDir, namespaces.Default, id)
+		img := fmt.Sprintf("%s.img", encrptPath)
+		dev := &cryptsetup.CryptDevice{}
+		if err := dev.CloseSecureFS(encrypt, encrptPath); err == nil {
+			err = os.Remove(img)
+			err = os.RemoveAll(encrptPath)
+			if err != nil {
+				log.G(ctx).Errorf("remove encrypt file err: %v", err)
+			}
+		}
+		return nil
+	}
+
 	var s specs.Spec
 	spec := containerd.WithSpec(&s, opts...)
 	cOpts = append(cOpts, spec)
 
 	container, err := c.client.NewContainer(ctx, id, cOpts...)
 	if err != nil {
+		// create container err
+		if err := cleanEncrypt(); err != nil {
+			log.G(ctx).Errorf("clean encrypt file err: %v", err)
+		}
 		return nil, err
 	}
 
