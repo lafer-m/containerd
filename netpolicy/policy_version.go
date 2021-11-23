@@ -79,7 +79,7 @@ func ParseGroup(group *policy.PolicyGroup) (*ReplaceIPTableArg, error) {
 				mask = "255.255.255.255"
 			}
 		case policy.NetPolicyType_Segment:
-			ip, mask, err = parseIP(ip)
+			ip, mask, err = parseIP(rule.Value)
 			if err != nil {
 				return nil, err
 			}

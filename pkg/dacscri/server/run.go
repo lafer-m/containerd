@@ -246,6 +246,9 @@ func (c *service) Run(ctx context.Context, req *criapi.RunContainerRequest) (*cr
 	lopts := containerd.WithAdditionalContainerLabels(labels)
 	cOpts = append(cOpts, lopts)
 	ilopts, err := withInternalLabels(ns, hostname, stateDir, netSlice, ports, logURI)
+	if err != nil {
+		return nil, err
+	}
 
 	cOpts = append(cOpts, ilopts)
 	opts = append(opts, propagateContainerdLabelsToOCIAnnotations())
