@@ -62,7 +62,7 @@ func init() {
 			if err := svc.loadExistPolicysFromRemote(); err != nil {
 				log.L.Warnf("load exist policys err: %v", err)
 			}
-			if err := svc.syncPolicyToContainers(); err != nil {
+			if err := svc.syncPolicyToContainers(true); err != nil {
 				log.L.Warnf("sync policy to containers err: %v", err)
 			}
 			go svc.run()
@@ -94,7 +94,7 @@ func (s *service) run() {
 			if err := s.loadExistPolicysFromRemote(); err != nil {
 				log.L.Warnf("load exist policys err: %v", err)
 			}
-			if err := s.syncPolicyToContainers(); err != nil {
+			if err := s.syncPolicyToContainers(false); err != nil {
 				log.L.Warnf("sync policy to containers err: %v", err)
 			}
 
@@ -104,7 +104,7 @@ func (s *service) run() {
 			if err := s.loadExistPolicysFromRemote(); err != nil {
 				log.L.Warnf("load exist policys err: %v", err)
 			}
-			if err := s.syncPolicyToContainers(); err != nil {
+			if err := s.syncPolicyToContainers(true); err != nil {
 				log.L.Warnf("sync policy to containers err: %v", err)
 			}
 
@@ -116,7 +116,7 @@ func (s *service) run() {
 	}
 }
 
-func (s *service) syncPolicyToContainers() error {
+func (s *service) syncPolicyToContainers(force bool) error {
 	ns := namespaces.Default
 	ctx := namespaces.WithNamespace(context.Background(), ns)
 	cns, err := s.containers.List(ctx)
@@ -131,7 +131,7 @@ func (s *service) syncPolicyToContainers() error {
 		}
 		policys, ok := s.policys[svc]
 		if ok {
-			if !policys.changed {
+			if !policys.changed && !force {
 				continue
 			}
 			// Get task object

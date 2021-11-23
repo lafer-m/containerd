@@ -487,7 +487,7 @@ func ensureEncrpts(id, token, ak string, req *criapi.RunContainerRequest, timeSt
 	// TODO should mount encrptPath filesystem
 	encryptIMG := fmt.Sprintf("%s.img", encrptPath)
 	dev := &cryptsetup.CryptDevice{}
-	err = dev.CreateSecureFS(encryptIMG, 10240, []byte(key))
+	err = dev.CreateSecureFS(encryptIMG, 500, []byte(key))
 	if err != nil {
 		return
 	}
@@ -560,11 +560,12 @@ func ensureEncrpts(id, token, ak string, req *criapi.RunContainerRequest, timeSt
 			}
 			switch header.Typeflag {
 			case tar.TypeDir:
-				if err := os.Mkdir(filepath.Join(encrptPath, header.Name), 0755); err != nil {
+				if err := os.Mkdir(filepath.Join(encrptPath, header.Name), header.FileInfo().Mode()); err != nil {
 					return mt, err
 				}
 			case tar.TypeReg:
-				outFile, err := os.Create(filepath.Join(encrptPath, header.Name))
+				// outFile, err := os.Create(filepath.Join(encrptPath, header.Name))
+				outFile, err := os.OpenFile(filepath.Join(encrptPath, header.Name), os.O_RDWR|os.O_CREATE|os.O_EXCL|os.O_SYNC, header.FileInfo().Mode())
 				if err != nil {
 					return mt, err
 				}
