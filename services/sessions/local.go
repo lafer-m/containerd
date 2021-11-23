@@ -290,6 +290,13 @@ func (l *local) StoreAKSK(ak, sk, service string) error {
 	return nil
 }
 
+func (l *local) DeleteAKSKLocal(service string) error {
+	return l.db.Update(func(t *bolt.Tx) error {
+		bk := t.Bucket([]byte(version)).Bucket([]byte(serviceBucket))
+		return bk.Delete([]byte(service))
+	})
+}
+
 func (l *local) GetAKSKLocal(service string) (string, string, error) {
 	ak, sk := "", ""
 	var err error

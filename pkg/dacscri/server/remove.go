@@ -187,6 +187,18 @@ func removeContainer(ctx context.Context, client *containerd.Client, ns, id, req
 		return retErr
 	}
 
+	labels, retErr := container.Labels(ctx)
+	if retErr != nil {
+		return retErr
+	}
+
+	svc := labels[ServiceLabelKey]
+	if svc != "" {
+		if err := client.SessionClient().DeleteAKSKLocal(svc); err != nil {
+			log.G(ctx).Errorf("delete service ak/sk err: %v", err)
+		}
+	}
+
 	task, retErr := container.Task(ctx, cio.Load)
 	if retErr != nil {
 		if errdefs.IsNotFound(retErr) {

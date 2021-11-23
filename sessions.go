@@ -13,4 +13,5 @@ type SessionClient interface {
 	StoreAKSK(ak, sk, service string) error
 	GetAKSKLocal(service string) (string, string, error)
 	ListService() ([]string, error)
+	DeleteAKSKLocal(service string) error
 }
