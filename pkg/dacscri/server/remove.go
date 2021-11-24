@@ -192,13 +192,6 @@ func removeContainer(ctx context.Context, client *containerd.Client, ns, id, req
 		return retErr
 	}
 
-	svc := labels[ServiceLabelKey]
-	if svc != "" {
-		if err := client.SessionClient().DeleteAKSKLocal(svc); err != nil {
-			log.G(ctx).Errorf("delete service ak/sk err: %v", err)
-		}
-	}
-
 	task, retErr := container.Task(ctx, cio.Load)
 	if retErr != nil {
 		if errdefs.IsNotFound(retErr) {
@@ -222,6 +215,14 @@ func removeContainer(ctx context.Context, client *containerd.Client, ns, id, req
 	if err := container.Delete(ctx, delOpts...); err != nil {
 		return err
 	}
+
+	svc := labels[ServiceLabelKey]
+	if svc != "" {
+		if err := client.SessionClient().DeleteAKSKLocal(svc); err != nil {
+			log.G(ctx).Errorf("delete service ak/sk err: %v", err)
+		}
+	}
+
 	// delete encrypt files
 	encrypt, err := cryptsetup.LoadCryptState(filepath.Join(stateDir, CryptState))
 	if err != nil {

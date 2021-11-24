@@ -9,6 +9,7 @@ import (
 	"time"
 
 	api "github.com/containerd/containerd/api/services/auth/proto"
+	auth "github.com/containerd/containerd/api/services/auth/proto"
 	"github.com/containerd/containerd/defaults"
 	"github.com/pkg/errors"
 	"google.golang.org/grpc"
@@ -61,6 +62,13 @@ func (l *aksk) GetServiceAKSK(ctx context.Context, in *api.GetAKSKReq, opts ...g
 
 func (l *aksk) VerifyServiceAKSK(ctx context.Context, in *api.VerifyAKSKReq, opts ...grpc.CallOption) (*api.VerifyASKSResp, error) {
 	return &api.VerifyASKSResp{}, nil
+}
+
+type policy struct {
+}
+
+func (p *policy) FetchPolicy(ctx context.Context, in *auth.FetchPolicyReq, opts ...grpc.CallOption) (*auth.FetchPolicyResp, error) {
+	return &auth.FetchPolicyResp{}, nil
 }
 
 // for now without tls

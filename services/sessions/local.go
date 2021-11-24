@@ -90,8 +90,6 @@ func init() {
 				db: db,
 			}
 			// for now just use
-			local.identifyAuth = &backend{}
-			local.akskAuth = &aksk{}
 			cfg := ic.Config.(*SessionConfig)
 			if cfg != nil {
 				if cfg.IdentifyAddress == "" {
@@ -100,6 +98,10 @@ func init() {
 			}
 			log.L.Infof("init session service config %s", cfg.String())
 			if cfg.Debug {
+				local.identifyAuth = &backend{}
+				local.akskAuth = &aksk{}
+				local.policy = &policy{}
+			} else {
 				conn, err := ConnectToBackend(cfg)
 				if err != nil {
 					return nil, err
