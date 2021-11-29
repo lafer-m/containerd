@@ -22,6 +22,7 @@ package process
 import (
 	"context"
 
+	"github.com/containerd/containerd/runtime/v2/runsc"
 	runc "github.com/containerd/go-runc"
 	google_protobuf "github.com/gogo/protobuf/types"
 	"github.com/pkg/errors"
@@ -111,7 +112,7 @@ func (s *createdState) Status(ctx context.Context) (string, error) {
 
 type createdCheckpointState struct {
 	p    *Init
-	opts *runc.RestoreOpts
+	opts *runsc.RestoreOpts
 }
 
 func (s *createdCheckpointState) transition(name string) error {

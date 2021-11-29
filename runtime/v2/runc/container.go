@@ -26,10 +26,13 @@ import (
 	"path/filepath"
 	"sync"
 
+	"github.com/BurntSushi/toml"
 	"github.com/containerd/cgroups"
 	cgroupsv2 "github.com/containerd/cgroups/v2"
 	"github.com/containerd/console"
+	"github.com/containerd/containerd/defaults"
 	"github.com/containerd/containerd/errdefs"
+	"github.com/containerd/containerd/log"
 	"github.com/containerd/containerd/mount"
 	"github.com/containerd/containerd/namespaces"
 	"github.com/containerd/containerd/pkg/process"
@@ -55,6 +58,15 @@ func NewContainer(ctx context.Context, platform stdio.Platform, r *task.CreateTa
 			return nil, err
 		}
 		opts = *v.(*options.Options)
+	}
+
+	runscCfg := &RunscOpts{}
+
+	path := filepath.Join(defaults.DefaultConfigDir, "engine.toml")
+	if _, err := os.Stat(path); err == nil {
+		if _, err := toml.DecodeFile(path, runscCfg); err != nil {
+			log.L.Errorf("parse runsc config err: %v", err)
+		}
 	}
 
 	var mounts []process.Mount
@@ -123,6 +135,7 @@ func NewContainer(ctx context.Context, platform stdio.Platform, r *task.CreateTa
 		config,
 		&opts,
 		rootfs,
+		runscCfg.RunscConfig,
 	)
 	if err != nil {
 		return nil, errdefs.ToGRPC(err)
@@ -209,8 +222,8 @@ func WriteRuntime(path, runtime string) error {
 }
 
 func newInit(ctx context.Context, path, workDir, namespace string, platform stdio.Platform,
-	r *process.CreateConfig, options *options.Options, rootfs string) (*process.Init, error) {
-	runtime := process.NewRunc(options.Root, path, namespace, options.BinaryName, options.CriuPath, options.SystemdCgroup)
+	r *process.CreateConfig, options *options.Options, rootfs string, runscConfig map[string]string) (*process.Init, error) {
+	runtime := process.NewRunsc(options.Root, path, namespace, options.BinaryName, runscConfig)
 	p := process.New(r.ID, runtime, stdio.Stdio{
 		Stdin:    r.Stdin,
 		Stdout:   r.Stdout,
@@ -233,6 +246,10 @@ func newInit(ctx context.Context, path, workDir, namespace string, platform stdi
 	return p, nil
 }
 
+type RunscOpts struct {
+	RunscConfig map[string]string `toml:"runsc_config" json:"runscConfig"`
+}
+
 // Container for operating on a runc container and its processes
 type Container struct {
 	mu sync.Mutex
@@ -247,6 +264,7 @@ type Container struct {
 	process         process.Process
 	processes       map[string]process.Process
 	reservedProcess map[string]struct{}
+	runscConfig     map[string]string
 }
 
 // All processes in the container

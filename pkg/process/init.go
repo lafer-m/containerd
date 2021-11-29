@@ -34,6 +34,7 @@ import (
 	"github.com/containerd/containerd/log"
 	"github.com/containerd/containerd/mount"
 	"github.com/containerd/containerd/pkg/stdio"
+	"github.com/containerd/containerd/runtime/v2/runsc"
 	"github.com/containerd/fifo"
 	runc "github.com/containerd/go-runc"
 	google_protobuf "github.com/gogo/protobuf/types"
@@ -62,7 +63,7 @@ type Init struct {
 	console  console.Console
 	Platform stdio.Platform
 	io       *processIO
-	runtime  *runc.Runc
+	runtime  *runsc.Runsc
 	// pausing preserves the pausing state.
 	pausing      *atomicBool
 	status       int
@@ -95,8 +96,23 @@ func NewRunc(root, path, namespace, runtime, criu string, systemd bool) *runc.Ru
 	}
 }
 
+// NewRunsc returns a new runsc instance for a process.
+func NewRunsc(root, path, namespace, runtime string, config map[string]string) *runsc.Runsc {
+	if root == "" {
+		root = RuncRoot
+	}
+	return &runsc.Runsc{
+		Command:      runtime,
+		PdeathSignal: unix.SIGKILL,
+		Log:          filepath.Join(path, "log.json"),
+		LogFormat:    runc.JSON,
+		Root:         filepath.Join(root, namespace),
+		Config:       config,
+	}
+}
+
 // New returns a new process
-func New(id string, runtime *runc.Runc, stdio stdio.Stdio) *Init {
+func New(id string, runtime *runsc.Runsc, stdio stdio.Stdio) *Init {
 	p := &Init{
 		id:        id,
 		runtime:   runtime,
@@ -132,10 +148,10 @@ func (p *Init) Create(ctx context.Context, r *CreateConfig) error {
 	if r.Checkpoint != "" {
 		return p.createCheckpointedState(r, pidFile)
 	}
-	opts := &runc.CreateOpts{
-		PidFile:      pidFile.Path(),
-		NoPivot:      p.NoPivotRoot,
-		NoNewKeyring: p.NoNewKeyring,
+	opts := &runsc.CreateOpts{
+		PidFile: pidFile.Path(),
+		// NoPivot:      p.NoPivotRoot,
+		// NoNewKeyring: p.NoNewKeyring,
 	}
 	if p.io != nil {
 		opts.IO = p.io.IO()
@@ -187,8 +203,8 @@ func (p *Init) openStdin(path string) error {
 }
 
 func (p *Init) createCheckpointedState(r *CreateConfig, pidFile *pidFile) error {
-	opts := &runc.RestoreOpts{
-		CheckpointOpts: runc.CheckpointOpts{
+	opts := &runsc.RestoreOpts{
+		CheckpointOpts: runsc.CheckpointOpts{
 			ImagePath:  r.Checkpoint,
 			WorkDir:    p.CriuWorkPath,
 			ParentPath: r.ParentCheckpoint,
@@ -262,7 +278,7 @@ func (p *Init) Start(ctx context.Context) error {
 }
 
 func (p *Init) start(ctx context.Context) error {
-	err := p.runtime.Start(ctx, p.id)
+	err := p.runtime.Start(ctx, p.id, nil)
 	return p.runtimeError(err, "OCI runtime start failed")
 }
 
@@ -355,7 +371,7 @@ func (p *Init) Kill(ctx context.Context, signal uint32, all bool) error {
 }
 
 func (p *Init) kill(ctx context.Context, signal uint32, all bool) error {
-	err := p.runtime.Kill(ctx, p.id, int(signal), &runc.KillOpts{
+	err := p.runtime.Kill(ctx, p.id, int(signal), &runsc.KillOpts{
 		All: all,
 	})
 	return checkKillError(err)
@@ -366,7 +382,7 @@ func (p *Init) KillAll(ctx context.Context) error {
 	p.mu.Lock()
 	defer p.mu.Unlock()
 
-	err := p.runtime.Kill(ctx, p.id, int(unix.SIGKILL), &runc.KillOpts{
+	err := p.runtime.Kill(ctx, p.id, int(unix.SIGKILL), &runsc.KillOpts{
 		All: true,
 	})
 	return p.runtimeError(err, "OCI runtime killall failed")
@@ -378,7 +394,7 @@ func (p *Init) Stdin() io.Closer {
 }
 
 // Runtime returns the OCI runtime configured for the init process
-func (p *Init) Runtime() *runc.Runc {
+func (p *Init) Runtime() *runsc.Runsc {
 	return p.runtime
 }
 
@@ -425,9 +441,9 @@ func (p *Init) Checkpoint(ctx context.Context, r *CheckpointConfig) error {
 }
 
 func (p *Init) checkpoint(ctx context.Context, r *CheckpointConfig) error {
-	var actions []runc.CheckpointAction
+	var actions []runsc.CheckpointAction
 	if !r.Exit {
-		actions = append(actions, runc.LeaveRunning)
+		actions = append(actions, runsc.LeaveRunning)
 	}
 	// keep criu work directory if criu work dir is set
 	work := r.WorkDir
@@ -435,7 +451,7 @@ func (p *Init) checkpoint(ctx context.Context, r *CheckpointConfig) error {
 		work = filepath.Join(p.WorkDir, "criu-work")
 		defer os.RemoveAll(work)
 	}
-	if err := p.runtime.Checkpoint(ctx, p.id, &runc.CheckpointOpts{
+	if err := p.runtime.Checkpoint(ctx, p.id, &runsc.CheckpointOpts{
 		WorkDir:                  work,
 		ImagePath:                r.Path,
 		AllowOpenTCP:             r.AllowOpenTCP,

@@ -34,6 +34,7 @@ import (
 	"github.com/containerd/console"
 	"github.com/containerd/containerd/errdefs"
 	"github.com/containerd/containerd/pkg/stdio"
+	"github.com/containerd/containerd/runtime/v2/runsc"
 	"github.com/containerd/fifo"
 	runc "github.com/containerd/go-runc"
 	specs "github.com/opencontainers/runtime-spec/specs-go"
@@ -196,7 +197,7 @@ func (e *execProcess) start(ctx context.Context) (err error) {
 		}
 		e.io = pio
 	}
-	opts := &runc.ExecOpts{
+	opts := &runsc.ExecOpts{
 		PidFile: pidFile.Path(),
 		Detach:  true,
 	}

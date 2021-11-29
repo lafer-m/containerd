@@ -32,6 +32,7 @@ import (
 	"time"
 
 	"github.com/containerd/containerd/errdefs"
+	"github.com/containerd/containerd/runtime/v2/runsc"
 	runc "github.com/containerd/go-runc"
 	"github.com/pkg/errors"
 	"golang.org/x/sys/unix"
@@ -39,7 +40,7 @@ import (
 
 const (
 	// RuncRoot is the path to the root runc state directory
-	RuncRoot = "/run/containerd/runc"
+	RuncRoot = "/run/dacsd/runc"
 	// InitPidFile name of the file that contains the init pid
 	InitPidFile = "init.pid"
 )
@@ -71,7 +72,7 @@ func (ab *atomicBool) get() bool {
 }
 
 // TODO(mlaventure): move to runc package?
-func getLastRuntimeError(r *runc.Runc) (string, error) {
+func getLastRuntimeError(r *runsc.Runsc) (string, error) {
 	if r.Log == "" {
 		return "", nil
 	}

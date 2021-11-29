@@ -487,7 +487,7 @@ func ensureEncrpts(id, token, ak string, req *criapi.RunContainerRequest, timeSt
 	// TODO should mount encrptPath filesystem
 	encryptIMG := fmt.Sprintf("%s.img", encrptPath)
 	dev := &cryptsetup.CryptDevice{}
-	err = dev.CreateSecureFS(encryptIMG, 500, []byte(key))
+	err = dev.CreateSecureFS(encryptIMG, 10240, []byte(key))
 	if err != nil {
 		return
 	}

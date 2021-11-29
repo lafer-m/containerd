@@ -648,7 +648,7 @@ func newInit(ctx context.Context, path, workDir, runtimeRoot, namespace, criu st
 		options = *v.(*runctypes.CreateOptions)
 	}
 
-	runtime := process.NewRunc(runtimeRoot, path, namespace, r.Runtime, criu, systemdCgroup)
+	runtime := process.NewRunsc(runtimeRoot, path, namespace, r.Runtime, map[string]string{})
 	p := process.New(r.ID, runtime, stdio.Stdio{
 		Stdin:    r.Stdin,
 		Stdout:   r.Stdout,
