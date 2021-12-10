@@ -1,6 +1,7 @@
 package cryptsetup
 
 import (
+	"fmt"
 	"os"
 	"testing"
 
@@ -45,4 +46,13 @@ func TestSecureFS(t *testing.T) {
 	if err != nil {
 		t.Fatalf("close secure FS failed: %s", err)
 	}
+}
+
+func Test_ARR(t *testing.T) {
+	fmt.Println("start")
+	a := []int{1, 23, 4}
+	b := []int{3, 4, 5, 6}
+	copy(a, b)
+	b = nil
+	fmt.Println(a, b, len(b), cap(b))
 }

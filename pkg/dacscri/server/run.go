@@ -109,6 +109,15 @@ func (c *service) Run(ctx context.Context, req *criapi.RunContainerRequest) (*cr
 		WithoutRunMount(), // unmount default tmpfs on "/run": https://github.com/containerd/nerdctl/issues/157
 	)
 
+	name := req.App.Type
+	containerNameStore, err := utils.New(dataStore, ns)
+	if err != nil {
+		return nil, err
+	}
+	if err := containerNameStore.Acquire(name, id); err != nil {
+		return nil, err
+	}
+
 	if runtime.GOOS == "linux" {
 		opts = append(opts,
 			oci.WithMounts([]specs.Mount{
@@ -130,8 +139,8 @@ func (c *service) Run(ctx context.Context, req *criapi.RunContainerRequest) (*cr
 		logURI = lu.String()
 	}
 
-	// restartFlag := strings.ToLower(req.Restart.String())
-	restartOpts, err := generateRestartOpts("no", logURI)
+	restartFlag := strings.ToLower(req.Restart.String())
+	restartOpts, err := generateRestartOpts(restartFlag, logURI)
 	if err != nil {
 		return nil, err
 	}
@@ -240,7 +249,7 @@ func (c *service) Run(ctx context.Context, req *criapi.RunContainerRequest) (*cr
 	labels[ServiceLabelKey] = req.App.Type
 	lopts := containerd.WithAdditionalContainerLabels(labels)
 	cOpts = append(cOpts, lopts)
-	ilopts, err := withInternalLabels(ns, hostname, stateDir, netSlice, ports, logURI)
+	ilopts, err := withInternalLabels(ns, name, hostname, stateDir, netSlice, ports, logURI)
 	if err != nil {
 		return nil, err
 	}
@@ -358,8 +367,11 @@ func propagateContainerdLabelsToOCIAnnotations() oci.SpecOpts {
 	}
 }
 
-func withInternalLabels(ns, hostname, containerStateDir string, networks []string, ports []gocni.PortMapping, logURI string) (containerd.NewContainerOpts, error) {
+func withInternalLabels(ns, name, hostname, containerStateDir string, networks []string, ports []gocni.PortMapping, logURI string) (containerd.NewContainerOpts, error) {
 	m := make(map[string]string)
+
+	m[utils.Name] = name
+
 	m[utils.Namespace] = ns
 	m[utils.Hostname] = hostname
 	m[utils.StateDir] = containerStateDir

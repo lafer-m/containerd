@@ -63,12 +63,16 @@ func (c *service) Remove(ctx context.Context, req *criapi.RemoveContainerRequest
 	if err != nil {
 		return nil, err
 	}
+	containerNameStore, err := utils.New(dataStore, "default")
+	if err != nil {
+		return nil, err
+	}
 
 	walker1 := &utils.ContainerWalker{
 		Client: client,
 		OnFound: func(ctx context.Context, found utils.FoundC) error {
 			stateDir := filepath.Join(dataStore, "containers", "default", found.Container.ID())
-			err = removeContainer(ctx, client, "default", found.Container.ID(), found.Req, true, dataStore, stateDir)
+			err = removeContainer(ctx, client, "default", found.Container.ID(), found.Req, true, dataStore, stateDir, containerNameStore)
 			return err
 		},
 	}
@@ -170,11 +174,19 @@ func waitContainerStop(ctx context.Context, exitCh <-chan containerd.ExitStatus,
 	}
 }
 
-func removeContainer(ctx context.Context, client *containerd.Client, ns, id, req string, force bool, dataStore, stateDir string) (retErr error) {
-	// var name string
+func removeContainer(ctx context.Context, client *containerd.Client, ns, id, req string, force bool, dataStore, stateDir string, namestore utils.NameStore) (retErr error) {
+	var name string
+
 	defer func() {
 		if errdefs.IsNotFound(retErr) {
 			retErr = nil
+		}
+		if retErr == nil {
+			if name != "" {
+				retErr = namestore.Release(name, id)
+			}
+		} else {
+			logrus.WithError(retErr).Warnf("failed to remove container %q", id)
 		}
 		if retErr == nil {
 			retErr = os.RemoveAll(stateDir)
@@ -191,6 +203,7 @@ func removeContainer(ctx context.Context, client *containerd.Client, ns, id, req
 	if retErr != nil {
 		return retErr
 	}
+	name = labels[utils.Name]
 
 	task, retErr := container.Task(ctx, cio.Load)
 	if retErr != nil {
