@@ -8,7 +8,7 @@ import (
 )
 
 const (
-	stamp = "WEARETHEBEST"
+	// stamp = "WEARETHEBEST"
 	charset = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
 )
 
@@ -21,11 +21,10 @@ func RandString(length int) string {
 	return string(b)
 }
 
-
 func TestNetlinkClient(t *testing.T) {
 	cfg := &DACSNetlinkCfg{
-		KernelStamp:stamp,
-		NetlinkProto:19,
+		KernelStamp:  stamp,
+		NetlinkProto: 19,
 	}
 
 	na, err := NewDACSNetlinkClient(cfg)
@@ -40,14 +39,14 @@ func TestNetlinkClient(t *testing.T) {
 
 	sandboxId1 := RandString(128)
 	err = na.AddSandbox(sandboxId1, 1234, "/root/testdir/")
-	fmt.Printf("SandboxID = %s\n" , sandboxId1)
+	fmt.Printf("SandboxID = %s\n", sandboxId1)
 	if err != nil {
 		t.Fatalf("AddSandbox failed, err: %s", err)
 	}
 
 	sandboxId2 := RandString(128)
 	err = na.AddSandbox(sandboxId2, 12345, "/root/testdir/")
-	fmt.Printf("SandboxID = %s\n" , sandboxId2)
+	fmt.Printf("SandboxID = %s\n", sandboxId2)
 	if err != nil {
 		t.Fatalf("AddSandbox failed, err: %s", err)
 	}
@@ -55,4 +54,3 @@ func TestNetlinkClient(t *testing.T) {
 	err = na.RemoveSandbox(sandboxId1)
 	err = na.RemoveSandbox(sandboxId2)
 }
-

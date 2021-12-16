@@ -9,6 +9,8 @@ import (
 	"unsafe"
 )
 
+const stamp = "WEARETHEBEST"
+
 type DACSNlMsg struct {
 	nlhdr   syscall.NlMsghdr
 	data    []byte
@@ -112,6 +114,14 @@ type DACSNetlinkClient struct {
 	netlinkProto int
 	kernelStamp  string
 	nl           *DACSNetLink
+}
+
+func NewDacsNetlinkClientWrapper() (*DACSNetlinkClient, error) {
+	cfg := &DACSNetlinkCfg{
+		KernelStamp:  stamp,
+		NetlinkProto: 19,
+	}
+	return NewDACSNetlinkClient(cfg)
 }
 
 func NewDACSNetlinkClient(cfg *DACSNetlinkCfg) (*DACSNetlinkClient, error) {

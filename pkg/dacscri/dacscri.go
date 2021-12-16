@@ -1,6 +1,8 @@
 package dacscri
 
 import (
+	"os"
+
 	"github.com/containerd/containerd"
 	"github.com/containerd/containerd/api/services/containers/v1"
 	"github.com/containerd/containerd/api/services/diff/v1"
@@ -12,6 +14,7 @@ import (
 	"github.com/containerd/containerd/log"
 	"github.com/containerd/containerd/pkg/dacscri/config"
 	"github.com/containerd/containerd/pkg/dacscri/server"
+	"github.com/containerd/containerd/pkg/netlink"
 	"github.com/containerd/containerd/platforms"
 	"github.com/containerd/containerd/plugin"
 	"github.com/containerd/containerd/services"
@@ -40,6 +43,15 @@ func initDacsCRIService(ic *plugin.InitContext) (interface{}, error) {
 		return nil, errors.Wrap(err, "failed to get services")
 	}
 
+	linkCli, err := netlink.NewDacsNetlinkClientWrapper()
+	if err != nil {
+		log.L.Warnf("failed to init netlink client")
+	} else {
+		if err := linkCli.SetMasterProInfo(uint32(os.Getpid())); err != nil {
+			log.L.Warnf("failed to set the master pid")
+		}
+	}
+
 	client, err := containerd.New("",
 		containerd.WithDefaultNamespace("default"),
 		containerd.WithDefaultPlatform(platforms.Default()),
@@ -49,7 +61,7 @@ func initDacsCRIService(ic *plugin.InitContext) (interface{}, error) {
 		return nil, err
 	}
 
-	return server.NewService(cfg, client), nil
+	return server.NewService(cfg, client, linkCli), nil
 }
 
 // getServicesOpts get service options from plugin context.

@@ -12,7 +12,9 @@ import (
 	"github.com/pkg/errors"
 )
 
-const IDLength = 64
+const (
+	IDLength = 64
+)
 
 func GenerateID() string {
 	bytesLength := IDLength / 2

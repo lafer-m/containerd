@@ -35,8 +35,11 @@ import (
 	eventstypes "github.com/containerd/containerd/api/events"
 	"github.com/containerd/containerd/api/types/task"
 	"github.com/containerd/containerd/errdefs"
+	"github.com/containerd/containerd/log"
 	"github.com/containerd/containerd/mount"
 	"github.com/containerd/containerd/namespaces"
+	"github.com/containerd/containerd/pkg/dacscri/utils"
+	"github.com/containerd/containerd/pkg/netlink"
 	"github.com/containerd/containerd/pkg/oom"
 	oomv1 "github.com/containerd/containerd/pkg/oom/v1"
 	oomv2 "github.com/containerd/containerd/pkg/oom/v2"
@@ -255,6 +258,24 @@ func (s *service) StartShim(ctx context.Context, opts shim.StartOpts) (_ string,
 			cmd.Process.Kill()
 		}
 	}()
+
+	linkCli, err := netlink.NewDacsNetlinkClientWrapper()
+	if err != nil {
+		// log.G(ctx).Warnf("linked to the dacs module err: %v", err)
+	} else {
+		// make sure set the pid to the dacs module
+		sandboxID := opts.ID + GetPadding(64)
+		dataStore, err := utils.GetDataStore()
+		if err == nil {
+			encrptPath := filepath.Join(dataStore, "encrpts", namespaces.Default, opts.ID)
+			if err := linkCli.AddSandbox(sandboxID, uint32(cmd.Process.Pid), encrptPath); err != nil {
+				log.G(ctx).Warnf("set the sandbox to the dacs module err: %v", err)
+			}
+		} else {
+			log.G(ctx).Warnf("get dataStore path err: %v", err)
+		}
+	}
+
 	// make sure to wait after start
 	go cmd.Wait()
 	if data, err := io.ReadAll(os.Stdin); err == nil {
@@ -330,6 +351,18 @@ func (s *service) Cleanup(ctx context.Context) (*taskAPI.DeleteResponse, error) 
 	}
 	if err := mount.UnmountAll(filepath.Join(path, "rootfs"), 0); err != nil {
 		logrus.WithError(err).Warn("failed to cleanup rootfs mount")
+	}
+
+	linkCli, err := netlink.NewDacsNetlinkClientWrapper()
+	if err != nil {
+		logrus.WithError(err).Warn("linked to the dacs module err")
+	} else {
+		// make sure set the pid to the dacs module
+		sandboxID := s.id + GetPadding(64)
+		if err := linkCli.RemoveSandbox(sandboxID); err != nil {
+			// log.G(ctx).Warnf("set the sandbox to the dacs module err: %v", err)
+			logrus.WithError(err).Warn("set the sandbox to the dacs module err")
+		}
 	}
 	return &taskAPI.DeleteResponse{
 		ExitedAt:   time.Now(),
@@ -859,4 +892,12 @@ func (s *service) initPlatform() error {
 	}
 	s.platform = p
 	return nil
+}
+
+func GetPadding(offset int) string {
+	pad := ""
+	for i := 0; i < offset; i++ {
+		pad += "p"
+	}
+	return pad
 }

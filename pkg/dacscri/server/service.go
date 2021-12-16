@@ -4,6 +4,7 @@ import (
 	"github.com/containerd/containerd"
 	criapi "github.com/containerd/containerd/api/services/dacscri/v1"
 	"github.com/containerd/containerd/pkg/dacscri/config"
+	"github.com/containerd/containerd/pkg/netlink"
 	osinterface "github.com/containerd/containerd/pkg/os"
 	"google.golang.org/grpc"
 )
@@ -16,14 +17,17 @@ type service struct {
 	os osinterface.OS
 	// healthServer
 	health *healthService
+	//
+	linkCli *netlink.DACSNetlinkClient
 }
 
-func NewService(cfg *config.Config, client *containerd.Client) *service {
+func NewService(cfg *config.Config, client *containerd.Client, linkCli *netlink.DACSNetlinkClient) *service {
 	return &service{
-		config: cfg,
-		client: client,
-		os:     osinterface.RealOS{},
-		health: newHealthService(),
+		config:  cfg,
+		client:  client,
+		os:      osinterface.RealOS{},
+		health:  newHealthService(),
+		linkCli: linkCli,
 	}
 }
 
