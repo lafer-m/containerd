@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"os"
+	"strings"
 	"syscall"
 	"unsafe"
 )
@@ -145,13 +146,15 @@ const (
 	KMSG_ADD_SANDBOX          = 1
 	KMSG_REMOVE_SANDBOX       = 2
 	KMSG_SET_MASTER_PROC_INFO = 3
+	KMSG_CLEAR_SANDBOX        = 4
 )
 
 const (
-	SANDBOX_INFO_DATA_SIZE        = 4270
+	SANDBOX_INFO_MIN_DATA_SIZE    = 1157
 	REMOVE_SANDBOX_INFO_MSG_SIZE  = 129
 	SET_MASTER_PROC_INFO_MSG_SIZE = 4
 	SANDBOX_ID_SIZE               = 128
+	SANDBOX_DEV_PATH_SIZE         = 1024
 )
 
 /*
@@ -170,7 +173,7 @@ const (
 	REGIST_SECRITE_STAMP_LEN = 16
 )
 
-func (na *DACSNetlinkClient) AddSandbox(sandboxId string, pid uint32, appWorkDir string) error {
+func (na *DACSNetlinkClient) AddSandbox(sandboxId string, pid uint32, cryptDevPath string, appWorkDir string) error {
 	if len(sandboxId) != SANDBOX_ID_SIZE {
 		return errors.New("invalid sandbox_id length")
 	}
@@ -184,17 +187,27 @@ func (na *DACSNetlinkClient) AddSandbox(sandboxId string, pid uint32, appWorkDir
 		return errors.New("invalid app work dir length")
 	}
 
+	cryptDevPathLen := len(cryptDevPath)
+	if cryptDevPathLen > 4096 || cryptDevPathLen == 0 {
+		return errors.New("invalid dev path length")
+	}
+	if !strings.HasPrefix(cryptDevPath, "/dev/mapper/") {
+		cryptDevPath = "/dev/mapper/" + cryptDevPath
+		cryptDevPathLen = len(cryptDevPath)
+	}
+
 	msgType := make([]byte, 4)
 	binary.LittleEndian.PutUint32(msgType, KMSG_ADD_SANDBOX)
 
-	msg := make([]byte, len(msgType)+SANDBOX_INFO_DATA_SIZE)
+	msg := make([]byte, len(msgType)+SANDBOX_INFO_MIN_DATA_SIZE+len(appWorkDir))
 	pidBytes := make([]byte, 4)
 	binary.LittleEndian.PutUint32(pidBytes, pid)
 
-	copy(msg[:len(msgType)], msgType[:])                      // copt msg type
-	copy(msg[len(msgType):], sandboxId[:128])                 // copy sandbox id
-	copy(msg[(len(msgType)+SANDBOX_ID_SIZE+1):], pidBytes[:]) // copy pid
-	copy(msg[(len(msgType)+SANDBOX_ID_SIZE+1+4):], appWorkDir[:])
+	copy(msg[:len(msgType)], msgType[:])                               // copt msg type
+	copy(msg[len(msgType):], sandboxId[:128])                          // copy sandbox id
+	copy(msg[(len(msgType)+SANDBOX_ID_SIZE+1):], pidBytes[:])          // copy pid
+	copy(msg[(len(msgType)+SANDBOX_ID_SIZE+1+4):], cryptDevPath[:])    // copy dev path
+	copy(msg[(len(msgType)+SANDBOX_ID_SIZE+1+4+1024):], appWorkDir[:]) // copy work dir
 
 	return na.nl.SendMsgToKernel(msg)
 }
@@ -232,3 +245,14 @@ func (na *DACSNetlinkClient) SetMasterProInfo(masterPid uint32) error {
 
 	return na.nl.SendMsgToKernel(msg)
 }
+
+func (na *DACSNetlinkClient) ClearSandbox() error {
+	msgType := make([]byte, 4)
+	binary.LittleEndian.PutUint32(msgType, KMSG_CLEAR_SANDBOX)
+
+	msg := make([]byte, len(msgType))
+	copy(msg[:len(msgType)], msgType[:]) // copt msg type
+
+	return na.nl.SendMsgToKernel(msg)
+}
+

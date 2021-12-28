@@ -38,19 +38,31 @@ func TestNetlinkClient(t *testing.T) {
 	}
 
 	sandboxId1 := RandString(128)
-	err = na.AddSandbox(sandboxId1, 1234, "/root/testdir/")
+	err = na.AddSandbox(sandboxId1, 1234, "/dev/mapper/USB", "/root/testdir1")
 	fmt.Printf("SandboxID = %s\n", sandboxId1)
 	if err != nil {
 		t.Fatalf("AddSandbox failed, err: %s", err)
 	}
 
 	sandboxId2 := RandString(128)
-	err = na.AddSandbox(sandboxId2, 12345, "/root/testdir/")
+	err = na.AddSandbox(sandboxId2, 12345, "/dev/mapper/yww", "/root/testdir2/")
 	fmt.Printf("SandboxID = %s\n", sandboxId2)
 	if err != nil {
 		t.Fatalf("AddSandbox failed, err: %s", err)
 	}
 
 	err = na.RemoveSandbox(sandboxId1)
+	if err != nil {
+		t.Fatalf("AddSandbox failed, err: %s", err)
+	}
+
 	err = na.RemoveSandbox(sandboxId2)
+	if err != nil {
+		t.Fatalf("AddSandbox failed, err: %s", err)
+	}
+
+	err = na.ClearSandbox()
+	if err != nil {
+		t.Fatalf("AddSandbox failed, err: %s", err)
+	}
 }
