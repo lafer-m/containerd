@@ -38,6 +38,7 @@ import (
 	"github.com/containerd/containerd/log"
 	"github.com/containerd/containerd/mount"
 	"github.com/containerd/containerd/namespaces"
+	"github.com/containerd/containerd/pkg/cryptsetup"
 	"github.com/containerd/containerd/pkg/dacscri/utils"
 	"github.com/containerd/containerd/pkg/netlink"
 	"github.com/containerd/containerd/pkg/oom"
@@ -268,7 +269,15 @@ func (s *service) StartShim(ctx context.Context, opts shim.StartOpts) (_ string,
 		dataStore, err := utils.GetDataStore()
 		if err == nil {
 			encrptPath := filepath.Join(dataStore, "encrpts", namespaces.Default, opts.ID)
-			if err := linkCli.AddSandbox(sandboxID, uint32(cmd.Process.Pid), encrptPath); err != nil {
+			// get encypt dev
+			// delete encrypt files
+			stateDir := filepath.Join(dataStore, "containers", "default", opts.ID)
+			encrypt, err := cryptsetup.LoadCryptState(filepath.Join(stateDir, "crypt.txt"))
+			if err != nil {
+				log.G(ctx).Warnf("load crypt state err: %v", err)
+			}
+
+			if err := linkCli.AddSandbox(sandboxID, uint32(cmd.Process.Pid), encrypt, encrptPath); err != nil {
 				log.G(ctx).Warnf("set the sandbox to the dacs module err: %v", err)
 			}
 		} else {
