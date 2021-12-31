@@ -23,6 +23,7 @@ import (
 	"github.com/containerd/containerd/api/services/dacscri/v1"
 	criapi "github.com/containerd/containerd/api/services/dacscri/v1"
 	"github.com/containerd/containerd/log"
+	"github.com/docker/go-units"
 
 	"github.com/containerd/containerd/cio"
 	"github.com/containerd/containerd/containers"
@@ -134,6 +135,7 @@ func (c *service) Run(ctx context.Context, req *criapi.RunContainerRequest) (*cr
 
 	var logURI string
 	if lu, err := generateLogURI(dataStore); err != nil {
+		containerNameStore.Release(name, id)
 		return nil, err
 	} else if lu != nil {
 		logURI = lu.String()
@@ -142,6 +144,7 @@ func (c *service) Run(ctx context.Context, req *criapi.RunContainerRequest) (*cr
 	restartFlag := strings.ToLower(req.Restart.String())
 	restartOpts, err := generateRestartOpts(restartFlag, logURI)
 	if err != nil {
+		containerNameStore.Release(name, id)
 		return nil, err
 	}
 	cOpts = append(cOpts, restartOpts...)
@@ -150,7 +153,7 @@ func (c *service) Run(ctx context.Context, req *criapi.RunContainerRequest) (*cr
 	ports := make([]gocni.PortMapping, 0)
 	// netType := CNI, for now only support cni
 
-	netSlice := []string{"bridge"}
+	netSlice := []string{"lo", "bridge"}
 
 	{
 		cniPath := "/opt/cni/bin"
@@ -161,6 +164,7 @@ func (c *service) Run(ctx context.Context, req *criapi.RunContainerRequest) (*cr
 		}
 		ll, err := utils.ConfigLists(e)
 		if err != nil {
+			containerNameStore.Release(name, id)
 			return nil, err
 		}
 
@@ -173,6 +177,7 @@ func (c *service) Run(ctx context.Context, req *criapi.RunContainerRequest) (*cr
 				}
 			}
 			if netconflist == nil {
+				containerNameStore.Release(name, id)
 				return nil, errors.Errorf("no such network: %q", netstr)
 			}
 		}
@@ -241,6 +246,13 @@ func (c *service) Run(ctx context.Context, req *criapi.RunContainerRequest) (*cr
 	}
 	opts = append(opts, oci.WithNewPrivileges)
 
+	// ulimit opts
+	uopts, err := generateUlimitsOpts([]string{"nofile=100000:100000"})
+	if err != nil {
+		return nil, err
+	}
+	opts = append(opts, uopts...)
+
 	cOpts = append(cOpts, generateRuntimeCopts()...)
 	labels := map[string]string{}
 	if req.App.Labels != nil {
@@ -258,6 +270,7 @@ func (c *service) Run(ctx context.Context, req *criapi.RunContainerRequest) (*cr
 	opts = append(opts, propagateContainerdLabelsToOCIAnnotations())
 	mountOpts, err := generateMountOpts(ctx, c.client, ensuredImage, id, req, downAppToken, ak, timeStamp)
 	if err != nil {
+		containerNameStore.Release(name, id)
 		return nil, err
 	}
 	opts = append(opts, mountOpts...)
@@ -290,6 +303,7 @@ func (c *service) Run(ctx context.Context, req *criapi.RunContainerRequest) (*cr
 		if err := cleanEncrypt(); err != nil {
 			log.G(ctx).Errorf("clean encrypt file err: %v", err)
 		}
+		containerNameStore.Release(name, id)
 		return nil, err
 	}
 
@@ -562,6 +576,7 @@ func ensureEncrpts(id, token, ak string, req *criapi.RunContainerRequest, timeSt
 		defer response.Body.Close()
 		// only support tar file for now
 		tarReader := tar.NewReader(response.Body)
+		// linkHeaders := []*tar.Header{}
 		for {
 			header, err := tarReader.Next()
 			if err == io.EOF {
@@ -585,9 +600,20 @@ func ensureEncrpts(id, token, ak string, req *criapi.RunContainerRequest, timeSt
 					return mt, err
 				}
 				outFile.Close()
+			// case tar.TypeSymlink:
+			// 	linkHeaders = append(linkHeaders, header)
+			// 	// if err := os.Symlink(header.Linkname, header.Name); err != nil {
+			// 	// 	return mt, err
+			// 	// }
 			default:
 			}
 		}
+
+		// for _, header := range linkHeaders {
+		// 	if err := os.Symlink(filepath.Join(encrptPath, header.Linkname), header.Name); err != nil {
+		// 		return mt, err
+		// 	}
+		// }
 	}
 
 	mt = specs.Mount{
@@ -700,4 +726,32 @@ func withNerdctlOCIHook(id, stateDir string) (oci.SpecOpts, error) {
 		})
 		return nil
 	}, nil
+}
+
+func generateUlimitsOpts(ulimits []string) ([]oci.SpecOpts, error) {
+	var opts []oci.SpecOpts
+
+	if len(ulimits) > 0 {
+		var rlimits []specs.POSIXRlimit
+		for _, ulimit := range ulimits {
+			l, err := units.ParseUlimit(ulimit)
+			if err != nil {
+				return nil, err
+			}
+			rlimits = append(rlimits, specs.POSIXRlimit{
+				Type: "RLIMIT_" + strings.ToUpper(l.Name),
+				Hard: uint64(l.Soft),
+				Soft: uint64(l.Hard),
+			})
+		}
+		opts = append(opts, withRlimits(rlimits))
+	}
+	return opts, nil
+}
+
+func withRlimits(rlimits []specs.POSIXRlimit) oci.SpecOpts {
+	return func(_ context.Context, _ oci.Client, _ *containers.Container, s *oci.Spec) error {
+		s.Process.Rlimits = rlimits
+		return nil
+	}
 }
