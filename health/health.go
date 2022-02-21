@@ -155,7 +155,7 @@ func (h *Health) check() bool {
 func (h *Health) publish() {
 	ctx, cancel := context.WithTimeout(context.Background(), 1*time.Second)
 	defer cancel()
-	if err := h.publisher.Publish(ctx, "/network/blocking", ""); err != nil {
+	if err := h.publisher.Publish(ctx, "/network/blocking", nil); err != nil {
 		log.L.Warnf("publish blocking event err: %v", err)
 	}
 }
