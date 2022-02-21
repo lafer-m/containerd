@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/containerd/containerd/events"
+	"github.com/containerd/containerd/log"
 	"github.com/containerd/containerd/plugin"
 )
 
@@ -155,7 +156,7 @@ func (h *Health) publish() {
 	ctx, cancel := context.WithTimeout(context.Background(), 1*time.Second)
 	defer cancel()
 	if err := h.publisher.Publish(ctx, "/network/blocking", ""); err != nil {
-
+		log.L.Warnf("publish blocking event err: %v", err)
 	}
 }
 
