@@ -83,6 +83,8 @@ const (
 	NetPolicyPlugin Type = "io.containerd.netpolicy.v1"
 	// SessionPlugin implements session manager
 	SessionPlugin Type = "io.containerd.session.v1"
+	// HealthPlugin implements gateway health check
+	HealthPlugin Type = "io.containerd.health.v1"
 )
 
 const (

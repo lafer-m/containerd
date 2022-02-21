@@ -2,6 +2,6 @@
 dep:  buildkitd service and buildctl cmd tool.
 ```
 make image
-host=arm64 mak image
+host=arm64 make image
 ```
 

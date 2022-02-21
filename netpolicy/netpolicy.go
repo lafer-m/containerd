@@ -5,8 +5,10 @@ import (
 	"time"
 
 	"github.com/containerd/containerd"
+	policy "github.com/containerd/containerd/api/services/auth/proto"
 	"github.com/containerd/containerd/containers"
 	"github.com/containerd/containerd/events"
+	"github.com/containerd/containerd/health"
 	"github.com/containerd/containerd/log"
 	"github.com/containerd/containerd/metadata"
 	"github.com/containerd/containerd/namespaces"
@@ -26,6 +28,7 @@ func init() {
 			plugin.ServicePlugin,
 			plugin.RuntimePluginV2,
 			plugin.MetadataPlugin,
+			plugin.HealthPlugin,
 		},
 		InitFn: func(ic *plugin.InitContext) (interface{}, error) {
 			cfg := ic.Config.(*Config)
@@ -34,6 +37,11 @@ func init() {
 				return nil, err
 			}
 			subscibeEvent := ev.(events.Subscriber)
+
+			hl, err := ic.Get(plugin.HealthPlugin)
+			if err != nil {
+				return nil, err
+			}
 
 			pl, err := ic.Get(plugin.RuntimePluginV2)
 			if err != nil {
@@ -49,15 +57,18 @@ func init() {
 			if err != nil {
 				return nil, err
 			}
-
+			heal := hl.(*health.Health)
 			db := m.(*metadata.DB)
 			svc := &service{
-				cfg:        cfg,
-				subscribe:  subscibeEvent,
-				runtime:    pl.(*v2.TaskManager),
-				backend:    back.(containerd.SessionClient),
-				policys:    map[string]*policyVersion{},
-				containers: metadata.NewContainerStore(db),
+				cfg:          cfg,
+				subscribe:    subscibeEvent,
+				runtime:      pl.(*v2.TaskManager),
+				health:       heal,
+				backend:      back.(containerd.SessionClient),
+				policys:      map[string]*policyVersion{},
+				containers:   metadata.NewContainerStore(db),
+				enableHealth: heal.Enabled(),
+				excludeSvc:   heal.Exclude(),
 			}
 			if err := svc.loadExistPolicysFromRemote(); err != nil {
 				log.L.Warnf("load exist policys err: %v", err)
@@ -72,18 +83,21 @@ func init() {
 }
 
 type service struct {
-	cfg        *Config
-	subscribe  events.Subscriber
-	containers containers.Store
-	runtime    *v2.TaskManager
-	backend    containerd.SessionClient
-	policys    map[string]*policyVersion
+	cfg          *Config
+	subscribe    events.Subscriber
+	containers   containers.Store
+	runtime      *v2.TaskManager
+	health       *health.Health
+	backend      containerd.SessionClient
+	policys      map[string]*policyVersion
+	excludeSvc   []string // this will exclude some health problem for some specil services
+	enableHealth bool     //  if true , will block service when health check failed
 }
 
 // timer ticker running
 func (s *service) run() {
 	ticker := time.NewTicker(time.Duration(s.cfg.TickDuration) * time.Second)
-	sub, err := s.subscribe.Subscribe(context.Background(), `topic=="/tasks/start"`)
+	sub, err := s.subscribe.Subscribe(context.Background(), `topic=="/tasks/start"`, `topic=="/network/blocking"`)
 	// log.L.Info("start netpolicy info")
 
 	for {
@@ -94,11 +108,23 @@ func (s *service) run() {
 			if err := s.loadExistPolicysFromRemote(); err != nil {
 				log.L.Warnf("load exist policys err: %v", err)
 			}
-			if err := s.syncPolicyToContainers(false); err != nil {
-				log.L.Warnf("sync policy to containers err: %v", err)
+			// health recover
+			if s.health.ShouldRecover() {
+				if err := s.syncPolicyToContainers(true); err != nil {
+					log.L.Warnf("sync policy to containers err: %v", err)
+				}
+			} else {
+				if err := s.syncPolicyToContainers(false); err != nil {
+					log.L.Warnf("sync policy to containers err: %v", err)
+				}
 			}
 
 		case ev := <-sub:
+			// handle with the health check event, must enable the health check.
+			if s.enableHealth && ev.Topic == "/network/blocking" {
+				waitRetry(3, s.syncBlockPolicyToContainers)
+				continue
+			}
 			// if is task start or restart event , must sync netpolicy to containers.
 			log.L.Infof("events: %v, %s", ev.Event, ev.Topic)
 			if err := s.loadExistPolicysFromRemote(); err != nil {
@@ -111,9 +137,49 @@ func (s *service) run() {
 		case e := <-err:
 			log.L.Infof("event err: %v", e)
 			// resubscribe
-			sub, err = s.subscribe.Subscribe(context.Background(), `topic=="/tasks/start"`)
+			sub, err = s.subscribe.Subscribe(context.Background(), `topic=="/tasks/start"`, `topic=="/network/blocking"`)
 		}
 	}
+}
+
+func (s *service) syncBlockPolicyToContainers() error {
+	ns := namespaces.Default
+	ctx := namespaces.WithNamespace(context.Background(), ns)
+	cns, err := s.containers.List(ctx)
+	if err != nil {
+		return err
+	}
+
+	for _, c := range cns {
+		svc, ok := c.Labels[dacssvc.ServiceLabelKey]
+		if !ok {
+			continue
+		}
+		// exclude the special service
+		if s.IsExlude(svc) {
+			continue
+		}
+
+		blockPolicys := newBlockPolicys(svc)
+		// Get task object
+		t, err := s.runtime.Get(ctx, c.ID)
+		if err != nil {
+			log.L.Warnf("sync policy failed : task %v not found", c.ID)
+			continue
+		}
+		pol, err := blockPolicys.marshal()
+		if err != nil {
+			log.L.Warnf("sync policy failed : task: %v marshal policys err: %v", c.ID, err)
+			continue
+		}
+
+		// set netpolicy for container
+		if err := t.SetNetPolicy(ctx, svc, string(pol)); err != nil {
+			log.L.Warnf("set netpolicy err: task %v., err: %v", c.ID, err)
+			return err
+		}
+	}
+	return nil
 }
 
 func (s *service) syncPolicyToContainers(force bool) error {
@@ -129,6 +195,11 @@ func (s *service) syncPolicyToContainers(force bool) error {
 		if !ok {
 			continue
 		}
+
+		if s.enableHealth && !s.IsExlude(svc) && s.health.IsBlock() {
+			continue
+		}
+
 		policys, ok := s.policys[svc]
 		if ok {
 			if !policys.changed && !force {
@@ -191,4 +262,45 @@ func (s *service) loadExistPolicysFromRemote() error {
 		s.policys[svc] = pv
 	}
 	return nil
+}
+
+func (s *service) IsExlude(svc string) bool {
+	for _, s := range s.excludeSvc {
+		if s == svc {
+			return true
+		}
+	}
+	return false
+}
+
+func newBlockPolicys(svc string) *policyVersion {
+	p := &policyVersion{
+		service: svc,
+		policys: []*policy.PolicyGroup{
+			{
+				Name:    svc,
+				Default: policy.NetPolicyAccessType_Deny,
+				NetworkPolicy: []*policy.NetPolicy{
+					{
+						Direction:  policy.PolicyDirection_Input,
+						Protocol:   policy.NetPolicyProtocol_TCP,
+						AccessType: policy.NetPolicyAccessType_Deny,
+						Type:       policy.NetPolicyType_IP,
+						Value:      "172.172.172.172",
+						IsActive:   true,
+						Port:       "80",
+					},
+				},
+			},
+		},
+	}
+	return p
+}
+
+func waitRetry(retry int, fn func() error) {
+	for count := 0; count < retry; count++ {
+		if err := fn(); err == nil {
+			break
+		}
+	}
 }
