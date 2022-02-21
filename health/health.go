@@ -9,6 +9,7 @@ import (
 	"github.com/containerd/containerd/log"
 	"github.com/containerd/containerd/namespaces"
 	"github.com/containerd/containerd/plugin"
+	"github.com/gogo/protobuf/types"
 )
 
 func init() {
@@ -158,7 +159,7 @@ func (h *Health) publish() {
 	ctx, cancel := context.WithTimeout(context.Background(), 1*time.Second)
 	defer cancel()
 	ctx = namespaces.WithNamespace(ctx, namespaces.Default)
-	if err := h.publisher.Publish(ctx, "/network/blocking", nil); err != nil {
+	if err := h.publisher.Publish(ctx, "/network/blocking", &types.Any{}); err != nil {
 		log.L.Warnf("publish blocking event err: %v", err)
 	}
 }

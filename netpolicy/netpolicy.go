@@ -121,12 +121,12 @@ func (s *service) run() {
 
 		case ev := <-sub:
 			// handle with the health check event, must enable the health check.
+			log.L.Infof("events: %v, %s", ev.Event, ev.Topic)
 			if s.enableHealth && ev.Topic == "/network/blocking" {
 				waitRetry(3, s.syncBlockPolicyToContainers)
 				continue
 			}
 			// if is task start or restart event , must sync netpolicy to containers.
-			log.L.Infof("events: %v, %s", ev.Event, ev.Topic)
 			if err := s.loadExistPolicysFromRemote(); err != nil {
 				log.L.Warnf("load exist policys err: %v", err)
 			}
