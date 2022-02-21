@@ -143,7 +143,7 @@ func (h *Health) check() bool {
 	h.mu.Unlock()
 	if oldState == OK && state != OK {
 		// publish a blocking event
-
+		h.publish()
 	}
 
 	// only timeout or other network problem ,could retry.
