@@ -49,7 +49,8 @@ func newClient(endpoint string, timeout time.Duration) (*client, error) {
 	gcli := grpc_health_v1.NewHealthClient(conn)
 
 	cli := &client{
-		gcli: gcli,
+		gcli:    gcli,
+		timeout: timeout,
 	}
 	return cli, nil
 }
