@@ -56,6 +56,7 @@ func init() {
 				lastState:   OK,
 				tick:        tickDuration,
 				recoverChan: make(chan struct{}),
+				mu:          &sync.RWMutex{},
 			}
 
 			go hl.run()
