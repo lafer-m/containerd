@@ -21,6 +21,7 @@ import (
 	_ "github.com/containerd/containerd/diff/walking/plugin"
 	_ "github.com/containerd/containerd/events/plugin"
 	_ "github.com/containerd/containerd/gc/scheduler"
+	_ "github.com/containerd/containerd/health"
 	_ "github.com/containerd/containerd/netpolicy"
 	_ "github.com/containerd/containerd/runtime/restart/monitor"
 	_ "github.com/containerd/containerd/services/containers"
