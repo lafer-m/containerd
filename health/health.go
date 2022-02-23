@@ -126,6 +126,9 @@ func (h *Health) run() {
 		select {
 		case <-ticker.C:
 			waitRetry(maxRetry, h.check)
+			if h.lastState == OK && h.state != OK {
+				h.publish()
+			}
 		case <-h.recoverChan:
 			h.lastState = OK
 		}
@@ -138,15 +141,15 @@ func (h *Health) check() bool {
 	if state == OK && h.state == OK {
 		return true
 	}
-	oldState := h.state
+	// oldState := h.state
 	h.mu.Lock()
 	h.lastState = h.state
 	h.state = state
 	h.mu.Unlock()
-	if oldState == OK && state != OK {
-		// publish a blocking event
-		h.publish()
-	}
+	// if oldState == OK && state != OK {
+	// 	// publish a blocking event
+	// 	h.publish()
+	// }
 
 	// only timeout or other network problem ,could retry.
 	if state == TIMEOUT {
