@@ -19,6 +19,8 @@ enum NetPolicyProtocol {
 enum NetPolicyAccessType {
   Permit = 0;
   Deny = 1;
+  RejectICMP = 2;
+  RejectTcpRST = 3;
 }
 
 enum PolicyDirection {

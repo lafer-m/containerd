@@ -69,6 +69,10 @@ func ParseGroup(group *policy.PolicyGroup) (*ReplaceIPTableArg, error) {
 		switch rule.AccessType {
 		case policy.NetPolicyAccessType_Deny:
 			ac = Drop
+		case policy.NetPolicyAccessType_RejectICMP:
+			ac = Reject
+		case policy.NetPolicyAccessType_RejectTcpRST:
+			ac = RejectTCPRST
 		}
 
 		ip, mask := "", ""
@@ -197,9 +201,10 @@ func parsePorts(ports string) (uint16, uint16, error) {
 type Action string
 
 const (
-	Drop   Action = "drop"
-	Accept        = "accept"
-	Reject        = "reject"
+	Drop         Action = "drop"
+	Accept              = "accept"
+	Reject              = "reject"
+	RejectTCPRST        = "rejectTcpRST"
 )
 
 // ReplaceIPTableArg

@@ -7,4 +7,5 @@ type Config struct {
 	Exclude      []string `toml:"exclude"`       // exclude health check for some service
 	EchoServer   string   `toml:"echo_server"`   // echo_server ip port
 	MaxRetry     int      `toml:"max_retry"`     // max retry times to change state when health check failed, default 1;
+	RejectAction string   `toml:"reject_action"` // reject action in
 }

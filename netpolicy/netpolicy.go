@@ -2,6 +2,7 @@ package netpolicy
 
 import (
 	"context"
+	"fmt"
 	"time"
 
 	"github.com/containerd/containerd"
@@ -59,6 +60,14 @@ func init() {
 			}
 			heal := hl.(*health.Health)
 			db := m.(*metadata.DB)
+			rejectAction := policy.NetPolicyAccessType_RejectTcpRST
+			switch heal.RejectAction() {
+			case Reject:
+				rejectAction = policy.NetPolicyAccessType_RejectICMP
+			case string(Drop):
+				rejectAction = policy.NetPolicyAccessType_Deny
+			}
+
 			svc := &service{
 				cfg:          cfg,
 				subscribe:    subscibeEvent,
@@ -69,6 +78,7 @@ func init() {
 				containers:   metadata.NewContainerStore(db),
 				enableHealth: heal.Enabled(),
 				excludeSvc:   heal.Exclude(),
+				rejectAction: rejectAction,
 			}
 			if err := svc.loadExistPolicysFromRemote(); err != nil {
 				log.L.Warnf("load exist policys err: %v", err)
@@ -92,6 +102,7 @@ type service struct {
 	policys      map[string]*policyVersion
 	excludeSvc   []string // this will exclude some health problem for some specil services
 	enableHealth bool     //  if true , will block service when health check failed
+	rejectAction policy.NetPolicyAccessType
 }
 
 // timer ticker running
@@ -160,7 +171,7 @@ func (s *service) syncBlockPolicyToContainers() error {
 			continue
 		}
 
-		blockPolicys := newBlockPolicys(svc)
+		blockPolicys := newBlockPolicys(svc, s.rejectAction)
 		// Get task object
 		t, err := s.runtime.Get(ctx, c.ID)
 		if err != nil {
@@ -273,7 +284,8 @@ func (s *service) IsExlude(svc string) bool {
 	return false
 }
 
-func newBlockPolicys(svc string) *policyVersion {
+func newBlockPolicys(svc string, tp policy.NetPolicyAccessType) *policyVersion {
+	ports := fmt.Sprintf("%d-%d", 1, maxPort)
 	p := &policyVersion{
 		service: svc,
 		policys: []*policy.PolicyGroup{
@@ -284,11 +296,11 @@ func newBlockPolicys(svc string) *policyVersion {
 					{
 						Direction:  policy.PolicyDirection_Input,
 						Protocol:   policy.NetPolicyProtocol_TCP,
-						AccessType: policy.NetPolicyAccessType_Deny,
+						AccessType: tp,
 						Type:       policy.NetPolicyType_IP,
-						Value:      "172.172.172.172",
+						Value:      "0.0.0.0/1",
 						IsActive:   true,
-						Port:       "80",
+						Port:       ports,
 					},
 				},
 			},

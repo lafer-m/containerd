@@ -20,6 +20,7 @@ func init() {
 			TickDuration: "10s",
 			TIMEOUT:      "1s",
 			EchoServer:   "127.0.0.1:8089",
+			RejectAction: "rejectTcpRST",
 		},
 		Requires: []plugin.Type{
 			plugin.EventPlugin,
@@ -93,6 +94,10 @@ func (h *Health) Enabled() bool {
 
 func (h *Health) Exclude() []string {
 	return h.cfg.Exclude
+}
+
+func (h *Health) RejectAction() string {
+	return h.cfg.RejectAction
 }
 
 func (h *Health) IsBlock() bool {
